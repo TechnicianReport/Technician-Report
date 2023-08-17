@@ -3,9 +3,9 @@ import { useState } from 'react';
 // @mui
 import { Container, Stack, Typography } from '@mui/material';
 // components
-import { ProductList } from '../sections/@dashboard/profiling';
+import { ProductList } from '../sections/@dashboard/form';
 // mock
-import PRODUCTS from '../_mock/products';
+import FORMS from '../_mock/forms';
 
 
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
@@ -50,12 +50,12 @@ export default function ProductsPage() {
   return (
     <>
       <Helmet>
-        <title>Profiling</title>
+        <title>Forms</title>
       </Helmet>
 
       <Container>
         <Typography variant="h2" sx={{ mb: 5 }}>
-          Profiling
+          Forms
         </Typography>
 
 
@@ -75,7 +75,7 @@ export default function ProductsPage() {
           </Stack>
         </Stack>
 
-        <ProductList products={PRODUCTS} />
+        <ProductList forms={FORMS} />
       </Container>
     </>
   );

@@ -21,11 +21,11 @@ const StyledProductImg = styled('img')({
 // ----------------------------------------------------------------------
 
 ShopProductCard.propTypes = {
-  product: PropTypes.object,
+  form: PropTypes.object,
 };
 
-export default function ShopProductCard({ product }) {
-  const { name, cover} = product;
+export default function ShopProductCard({ form }) {
+  const { name, cover} = form;
 
   return (
     <Card>

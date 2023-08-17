@@ -26,7 +26,7 @@ const navConfig = [
   },
   {
     title: 'Reports',
-    path: '/dashboard/products',
+    path: '/dashboard/report',
     icon: icon('ic_lock'),
   },
   {
