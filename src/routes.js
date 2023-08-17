@@ -9,6 +9,9 @@ import LoginPage from './pages/LoginPage';
 import Page404 from './pages/Page404';
 import ProductsPage from './pages/ProductsPage';
 import DashboardAppPage from './pages/DashboardAppPage';
+import Forms from './pages/Form';
+import Profiling from './pages/Profiling';
+import Report from './pages/Report';
 
 // ----------------------------------------------------------------------
 
@@ -23,6 +26,9 @@ export default function Router() {
         { path: 'user', element: <UserPage /> },
         { path: 'products', element: <ProductsPage /> },
         { path: 'blog', element: <BlogPage /> },
+        { path: 'form', element: <Forms/> },
+        { path: 'profiling', element: <Profiling/> },
+        { path: 'report', element: <Report/> },
       ],
     },
     {
