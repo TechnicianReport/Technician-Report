@@ -4,16 +4,16 @@ import { sample } from 'lodash';
 // ----------------------------------------------------------------------
 
 const REPORTS = [
-  'Service Request',
-  'Borrow Item',
-  'Request Item',
+  'Inspection Report',
+  'Receipt of Returned Semi Expandable Property',
+  'Inventory Transfer Report (ITR)',
 
 ];
 // const PRODUCT_COLOR = ['#00AB55', '#000000', '#FFFFFF', '#FFC0CB', '#FF4842', '#1890FF', '#94D82D', '#FFC107'];
 
 // ----------------------------------------------------------------------
 
-const reports = [...Array(3)].map((_, index) => {
+const reports = [...Array(8)].map((_, index) => {
   const setIndex = index + 1;
 
   return {

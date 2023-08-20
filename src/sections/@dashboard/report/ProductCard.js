@@ -50,7 +50,7 @@ export default function ShopProductCard({ report }) {
 
       <Stack spacing={2} sx={{ p: 3 }}>
         <Link color="inherit" underline="hover">
-          <Typography variant="subtitle2" noWrap>
+          <Typography variant="subtitle2" >
             {name}
           </Typography>
         </Link>
