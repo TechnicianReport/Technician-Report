@@ -86,7 +86,9 @@ export default function Nav({ openNav, onCloseNav }) {
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {account.role}
               </Typography>
+              
             </Box>
+            {/* <Avatar src={account.photoURL} alt="photoURL" /> */}
           </StyledAccount>
         </Link>
       </Box>

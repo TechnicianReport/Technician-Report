@@ -30,7 +30,7 @@ export default function DashboardAppPage() {
   return (
     <>
       <Helmet>
-        <title> CICT Technician Report </title>
+        <title> CICT Technician Report</title>
       </Helmet>
 
       <Container maxWidth="xl">
