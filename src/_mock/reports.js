@@ -13,7 +13,7 @@ const REPORTS = [
 
 // ----------------------------------------------------------------------
 
-const reports = [...Array(8)].map((_, index) => {
+const reports = [...Array(3)].map((_, index) => {
   const setIndex = index + 1;
 
   return {
