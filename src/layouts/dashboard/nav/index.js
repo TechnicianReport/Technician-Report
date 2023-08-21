@@ -64,27 +64,10 @@ export default function Nav({ openNav, onCloseNav }) {
       
 
       <Box sx={{ mb: 3, mx: 11 }}>
-
-      <Logo />
-      
-        {/* <Link underline="none">
-          <StyledAccount>
-            <Avatar src={account.photoURL} alt="photoURL" />
-
-            <Box sx={{ ml: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
-                {account.displayName}
-              </Typography>
-
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {account.role}
-              </Typography>
-            </Box>
-          </StyledAccount>
-        </Link> */}
+        <Logo />
       </Box>
 
-      <NavSection data={navConfig} />
+      <NavSection data={navConfig}  />
 
       <Box sx={{ flexGrow: 1 }} />
 

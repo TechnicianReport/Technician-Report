@@ -18,6 +18,16 @@ const navConfig = [
     title: 'Forms',
     path: '/dashboard/form',
     icon: icon('ic_cart'),
+    subNav: [
+      {
+          title: 'Memorandum of Receipt',
+          path: '/',
+      },
+      {
+          title: 'Condemned Item',
+          path: '/',
+      }
+  ]
   },
   {
     title: 'Profiling',
@@ -31,7 +41,7 @@ const navConfig = [
   },
   {
     title: 'Archives',
-    path: '/dashboard/products',
+    path: '/dashboard/user',
     icon: <Icon icon="mi:clipboard-list" />,
   },
   // {
