@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 import { useState } from 'react';
 import { styled } from '@mui/material/styles';
 // @mui
-import { Container, Stack, Typography, Box, Card, Link } from '@mui/material';
+import { Container, Dialog, Button, Stack, Typography, Box, Card, Link  } from '@mui/material';
 // components
 import { ProductList } from '../sections/@dashboard/profiling';
 // mock
@@ -14,6 +14,127 @@ import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 // ----------------------------------------------------------------------
 
 export default function ProductsPage() {
+
+  const [isDialogOpen1, setDialogOpen1] = useState(false);
+  const [isDialogOpen2, setDialogOpen2] = useState(false);
+
+  const dialogContent1 = (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+  <h4 style={{ marginLeft: '20px' }}>Control No. : 000-000-001</h4>
+
+  <input type="date" id="date" style={{ marginLeft: '20px' }} />
+  <br />
+  <input type="text" placeholder="Enter Faculty Name" style={{ marginLeft: '20px' }} />
+  <br />
+  <input type="text" placeholder="Enter Location/Room" style={{ marginLeft: '20px' }} />
+  <br />
+  
+  <h4 style={{ marginLeft: '20px' }}>Select Services:</h4>
+  <div style={{ marginLeft: '20px' }}>
+   
+      <input type="checkbox" value="Application Installation" /> Application Installation
+    <br />
+      <input type="checkbox" value="Network" /> Network
+    <br />
+      <input type="checkbox" value="Inventory" /> Inventory
+    <br />
+      <input type="checkbox" value="Reformat" /> Reformat
+    <br />
+      <input type="checkbox" value="Repair" /> Repair
+       <br />
+      <input type="checkbox" value="Others" /> Others 
+    <br />
+  
+  </div>
+  <br />
+  <input type="text" placeholder="Enter Remarks" style={{ marginLeft: '20px' }} />
+  <br />
+  <input type="text" placeholder="Enter Requisitioner" style={{ marginLeft: '20px' }} />
+  <br />
+  <div>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <Button variant="contained" color="primary">
+      Save
+    </Button> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+    <Button variant="contained" color="secondary">
+      Clear
+    </Button>
+  </div>
+</div>
+  );
+
+  const dialogContent2 = (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+  <h4 style={{ marginLeft: '20px' }}>Control No. : 000-000-001</h4>
+
+  <input type="date" id="date" style={{ marginLeft: '20px' }} />
+  <br />
+  <input type="text" placeholder="Enter Faculty Name" style={{ marginLeft: '20px' }} />
+  <br />
+  <input type="text" placeholder="Enter Location/Room" style={{ marginLeft: '20px' }} />
+  <br />
+  
+  <h4 style={{ marginLeft: '20px' }}>Select Services:</h4>
+  <div style={{ marginLeft: '20px' }}>
+   
+      <input type="checkbox" value="Application Installation" /> Application Installation
+    <br />
+      <input type="checkbox" value="Network" /> Network
+    <br />
+      <input type="checkbox" value="Inventory" /> Inventory
+    <br />
+      <input type="checkbox" value="Reformat" /> Reformat
+    <br />
+      <input type="checkbox" value="Repair" /> Repair
+       <br />
+      <input type="checkbox" value="Others" /> Others 
+    <br />
+  
+  </div>
+  <br />
+  <input type="text" placeholder="Enter Remarks" style={{ marginLeft: '20px' }} />
+  <br />
+  <input type="text" placeholder="Enter Requisitioner" style={{ marginLeft: '20px' }} />
+  <br />
+  <div>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <Button variant="contained" color="primary">
+      Save
+    </Button> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+    <Button variant="contained" color="secondary">
+      Clear
+    </Button>
+  </div>
+</div>
+  );
+
+  const openDialog1 = () => {
+    setDialogOpen1(true);
+  };
+
+  const closeDialog1 = () => {
+    setDialogOpen1(false);
+  };
+  
+  const openDialog2 = () => {
+    setDialogOpen2(true);
+  };
+
+  const closeDialog2 = () => {
+    setDialogOpen2(false);
+  };
+
+  const handleTypographyClick1 = () => {
+    openDialog1();
+  };
+
+  const handleTypographyClick2 = () => {
+    openDialog2();
+  };
+
+
   const [openFilter, setOpenFilter] = useState(false);
 
   const handleOpenFilter = () => {
@@ -77,7 +198,7 @@ export default function ProductsPage() {
 
 
         <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
-          {/* <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} /> */}
+          <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
           <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1 }}>
             {/* <ProductFilterSidebar
               openFilter={openFilter}
@@ -96,9 +217,16 @@ export default function ProductsPage() {
             </Box>
             <Stack spacing={2} sx={{ p: 3 }}>
               <Link color="inherit" underline="hover">
-                <Typography variant="subtitle2">
-                  Memorandum of Receipts
-                </Typography>
+              <Typography
+            variant="subtitle2"
+            onClick={handleTypographyClick1}
+            sx={{ cursor: 'pointer' }}
+          >
+            Memorandum of Receipts
+          </Typography>
+        <Dialog open={isDialogOpen1} onClose={closeDialog1}>
+          {dialogContent1}
+        </Dialog>
               </Link>
             </Stack>
           </Card>
@@ -109,17 +237,21 @@ export default function ProductsPage() {
             </Box>
             <Stack spacing={2} sx={{ p: 3 }}>
               <Link color="inherit" underline="hover">
-                <Typography variant="subtitle2">
-                  Condemned Items
-                </Typography>
+              <Typography
+            variant="subtitle2"
+            onClick={handleTypographyClick2}
+            sx={{ cursor: 'pointer' }}
+          >
+            Condemned Items
+          </Typography>
+        
+        <Dialog open={isDialogOpen2} onClose={closeDialog2}>
+          {dialogContent2}
+        </Dialog>
               </Link>
             </Stack>
           </Card>
-
         </Stack>
-
-
-
       </Container>
     </>
   );
