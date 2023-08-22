@@ -21,13 +21,13 @@ export default function BlogPage() {
   return (
     <>
       <Helmet>
-        <title> Dashboard: Blog | Minimal UI </title>
+        <title> Memorandum of Receipts </title>
       </Helmet>
 
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-          <Typography variant="h4" gutterBottom>
-            Blog
+          <Typography variant="h2" gutterBottom>
+            Memorandum of Receipts
           </Typography>
           <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
             New Post

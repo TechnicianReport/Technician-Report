@@ -1,4 +1,10 @@
 import { Helmet } from 'react-helmet-async';
+// @mui
+// components
+
+// // mock
+
+
 import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import { useState } from 'react';
@@ -6,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 // @mui
 import {
   Card,
+  Grid,
   Table,
   Stack,
   Paper,
@@ -29,16 +36,23 @@ import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
 // sections
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
+import { BlogPostCard, BlogPostsSort, BlogPostsSearch } from '../sections/@dashboard/condemned';
 // mock
 import USERLIST from '../_mock/user';
+import POSTS from '../_mock/blog';
 
 // ----------------------------------------------------------------------
 
+const SORT_OPTIONS = [
+  { value: 'latest', label: 'Latest' },
+  { value: 'popular', label: 'Popular' },
+  { value: 'oldest', label: 'Oldest' },
+];
 const TABLE_HEAD = [
   { id: 'name', label: 'Name', alignRight: false },
-  { id: 'company', label: 'Company', alignRight: false },
-  { id: 'role', label: 'Role', alignRight: false },
-  { id: 'isVerified', label: 'Verified', alignRight: false },
+  { id: 'company', label: 'Department', alignRight: false },
+  { id: 'role', label: 'Position', alignRight: false },
+  { id: 'isVerified', label: 'Remarks', alignRight: false },
   { id: 'status', label: 'Status', alignRight: false },
   { id: '' },
 ];
@@ -74,7 +88,7 @@ function applySortFilter(array, comparator, query) {
   return stabilizedThis.map((el) => el[0]);
 }
 
-export default function UserPage() {
+export default function Condemned() {
   const [open, setOpen] = useState(null);
 
   const [page, setPage] = useState(0);
@@ -152,17 +166,41 @@ export default function UserPage() {
   const handlebtnClick = () => {
     navigate('/dashboard', { replace: true });
   };
+// ----------------------------------------------------------------------
+
 
   return (
     <>
       <Helmet>
-        <title> User</title>
+        <title> Condemned Item </title>
       </Helmet>
 
       <Container>
+        {/* <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+          <Typography variant="h2" gutterBottom style={{ color: '#FF5500' }}>
+            Condened Item
+          </Typography>
+          <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
+            New Post
+          </Button>
+        </Stack>
+
+        <Stack mb={5} direction="row" alignItems="center" justifyContent="space-between">
+          <BlogPostsSearch posts={POSTS} />
+          <BlogPostsSort options={SORT_OPTIONS} />
+        </Stack> */}
+
+        <Grid container spacing={3}>
+
+          {/* {POSTS.map((post, index) => (
+            <BlogPostCard key={post.id} post={post} index={index} />
+          ))}
+           */}
+
+<Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-          <Typography variant="h2" gutterBottom>
-            User
+          <Typography variant="h2" gutterBottom style={{ color: '#ff5500' }}>
+            Condemned Items
           </Typography>
           <Button onClick={handlebtnClick} variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
             New User
@@ -268,34 +306,8 @@ export default function UserPage() {
         </Card>
       </Container>
 
-      <Popover
-        open={Boolean(open)}
-        anchorEl={open}
-        onClose={handleCloseMenu}
-        anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        PaperProps={{
-          sx: {
-            p: 1,
-            width: 140,
-            '& .MuiMenuItem-root': {
-              px: 1,
-              typography: 'body2',
-              borderRadius: 0.75,
-            },
-          },
-        }}
-      >
-        <MenuItem>
-          <Iconify icon={'eva:edit-fill'} sx={{ mr: 2 }} />
-          Edit
-        </MenuItem>
-
-        <MenuItem sx={{ color: 'error.main' }}>
-          <Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
-          Delete
-        </MenuItem>
-      </Popover>
+        </Grid>
+      </Container>
     </>
   );
 }

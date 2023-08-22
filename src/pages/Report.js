@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState } from 'react';
 // @mui
-import { Container, Stack, Typography } from '@mui/material';
+import { Container, Stack, Typography, Box, Card, Link } from '@mui/material';
 // components
 import { ProductList } from '../sections/@dashboard/report';
 // mock
@@ -75,7 +75,48 @@ export default function ProductsPage() {
           </Stack>
         </Stack>
 
-        <ProductList reports={REPORTS} />
+        {/* <ProductList reports={REPORTS} /> */}
+        <Stack direction="row" spacing={3} flexShrink={0} sx={{ my: 1 }}>
+          <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
+            <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
+              {/* <StyledProductImg alt={name} src={cover} /> */}
+            </Box>
+            <Stack spacing={2} sx={{ p: 3 }}>
+              <Link color="inherit" underline="hover">
+                <Typography variant="subtitle2" >
+                  Memorandum of Receipts
+                </Typography>
+              </Link>
+            </Stack>
+          </Card>
+
+          <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
+            <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
+              {/* <StyledProductImg alt={name} src={cover} /> */}
+            </Box>
+            <Stack spacing={2} sx={{ p: 3 }}>
+              <Link color="inherit" underline="hover">
+                <Typography variant="subtitle2">
+                  Condemned Items
+                </Typography>
+              </Link>
+            </Stack>
+          </Card>
+
+          <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
+            <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
+              {/* <StyledProductImg alt={name} src={cover} /> */}
+            </Box>
+            <Stack spacing={2} sx={{ p: 3 }}>
+              <Link color="inherit" underline="hover">
+                <Typography variant="subtitle2">
+                  Condemned Items
+                </Typography>
+              </Link>
+            </Stack>
+          </Card>
+
+        </Stack>
       </Container>
     </>
   );

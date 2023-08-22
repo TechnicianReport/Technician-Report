@@ -251,7 +251,7 @@ export default function ProductsPage() {
           </Stack>
         </Stack>
 
-        <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1 }}>
+        <Stack direction="row" spacing={3} flexShrink={0} sx={{ my: 1 }}>
         <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative' }}>
       <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
         {/* <StyledProductImg alt={name} src={cover} /> */}

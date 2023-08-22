@@ -1,7 +1,8 @@
 import { Helmet } from 'react-helmet-async';
 import { useState } from 'react';
 import { styled } from '@mui/material/styles';
-// @mui
+import { useNavigate } from 'react-router-dom';
+
 import { Container, Stack, Typography, Box, Card, Link } from '@mui/material';
 // components
 import { ProductList } from '../sections/@dashboard/profiling';
@@ -10,6 +11,7 @@ import PRODUCTS from '../_mock/products';
 
 
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
+// import Mr from '../pages/techfroms/Mr';
 
 // ----------------------------------------------------------------------
 
@@ -58,6 +60,16 @@ export default function ProductsPage() {
   });
 
   const { name, cover} = PRODUCTS;
+
+  const navigate = useNavigate();
+
+  const handlebtnClick = () => {
+    navigate('../blog');
+};
+
+const condemned = () => {
+  navigate('../condemned');
+};
   
 
   return (
@@ -89,14 +101,14 @@ export default function ProductsPage() {
         </Stack>
 
         {/* <ProductList products={PRODUCTS} /> */}
-        <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1 }}>
+        <Stack direction="row" spacing={3} flexShrink={0} sx={{ my: 1 }}>
           <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
             <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
-              <StyledProductImg alt={name} src={cover} />
+              {/* <StyledProductImg alt={name} src={cover} /> */}
             </Box>
             <Stack spacing={2} sx={{ p: 3 }}>
               <Link color="inherit" underline="hover">
-                <Typography variant="subtitle2">
+                <Typography variant="subtitle2" onClick={handlebtnClick}>
                   Memorandum of Receipts
                 </Typography>
               </Link>
@@ -105,11 +117,11 @@ export default function ProductsPage() {
 
           <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
             <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
-              <StyledProductImg alt={name} src={cover} />
+              {/* <StyledProductImg alt={name} src={cover} /> */}
             </Box>
             <Stack spacing={2} sx={{ p: 3 }}>
               <Link color="inherit" underline="hover">
-                <Typography variant="subtitle2">
+                <Typography variant="subtitle2" onClick={condemned}>
                   Condemned Items
                 </Typography>
               </Link>
