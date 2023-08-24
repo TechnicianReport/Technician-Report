@@ -7,13 +7,14 @@ const FORMS = [
   'Service Request',
   'Borrow Item',
   'Request Item',
+  'Inspection Report',
 
 ];
 // const PRODUCT_COLOR = ['#00AB55', '#000000', '#FFFFFF', '#FFC0CB', '#FF4842', '#1890FF', '#94D82D', '#FFC107'];
 
 // ----------------------------------------------------------------------
 
-const forms = [...Array(3)].map((_, index) => {
+const forms = [...Array(4)].map((_, index) => {
   const setIndex = index + 1;
 
   return {
