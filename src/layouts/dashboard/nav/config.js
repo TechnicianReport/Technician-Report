@@ -13,22 +13,67 @@ const navConfig = [
     path: '/dashboard/app',
     icon: icon('ic_analytics'),
   },
- 
+ //                  FORMS
   {
     title: 'Forms',
     path: '/dashboard/form',
     icon: icon('ic_cart'),
+    children: [
+      {
+        title: 'Service Request Form',
+        path: '/dashboard/form/service-request',
+      },
+      {
+        title: 'Borrowers Item Form',
+        path: '/dashboard/form/borrowers-item',
+      },
+      {
+        title: 'Request Item Form',
+        path: '/dashboard/form/request-item',
+      },
+      {
+        title: 'Inspection Report Form',
+        path: '/dashboard/form/inspection-report',
+      },
+    ],
   },
+//             PROFILING
   {
     title: 'Profiling',
     path: '/dashboard/profiling',
     icon: icon('ic_blog'),
+    children: [
+      {
+        title: 'Memorandum of Receipts',
+        path: '/dashboard/profiling/mr', // Replace with the actual path
+      },
+      {
+        title: 'Condemned Items',
+        path: '/dashboard/profiling/condemned', // Replace with the actual path
+      },
+    ],
   },
+//               REPORTS
   {
     title: 'Reports',
     path: '/dashboard/report',
     icon: icon('ic_lock'),
+    children: [
+      {
+        title: 'Inspection Report',
+        path: '/dashboard/report/inspection',
+      },
+      {
+        title: 'Receipt of Returned Semi Expandable Property',
+        path: '/dashboard/report/rrsp',
+      },
+      {
+        title: 'Inventory Transfer Report',
+        path: '/dashboard/report/itr',
+      },
+    ],
   },
+
   {
     title: 'Archives',
     path: '/dashboard/user',

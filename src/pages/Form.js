@@ -160,28 +160,15 @@ export default function ProductsPage() {
 
   <input type="date" id="date" style={{ marginLeft: '20px' }} />
   <br />
-  <input type="text" placeholder="Enter Faculty Name" style={{ marginLeft: '20px' }} />
+  <input type="text" placeholder="Issue" style={{ marginLeft: '20px' }} />
   <br />
-  <input type="text" placeholder="Enter Location/Room" style={{ marginLeft: '20px' }} />
+  <input type="text" placeholder="Description" style={{ marginLeft: '20px' }} />
+  <br />
+  <input type="text" placeholder="Action Taken" style={{ marginLeft: '20px' }} />
+  <br />
+  <input type="text" placeholder="Solution" style={{ marginLeft: '20px' }} />
   <br />
   
-  <h4 style={{ marginLeft: '20px' }}>Select Items:</h4>
-  <div style={{ marginLeft: '20px' }}>
-   
-      <input type="checkbox" value="Mouse" /> Mouse
-    <br />
-      <input type="checkbox" value="Keyboard" /> Keyboard
-    <br />
-      <input type="checkbox" value="Monitor" /> Monitor
-    <br />
-      <input type="checkbox" value="AVR" /> AVR
-    <br />
-      <input type="checkbox" value="CPU" /> CPU
-       <br />
-      <input type="checkbox" value="Others" /> Others 
-    <br />
-  
-  </div>
   <br />
   <input type="text" placeholder="Enter Remarks" style={{ marginLeft: '20px' }} />
   <br />

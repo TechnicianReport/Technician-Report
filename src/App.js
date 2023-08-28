@@ -1,4 +1,5 @@
-import { BrowserRouter } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Route as PrivateRoute, Outlet, Link, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 // routes
 import Router from './routes';
@@ -17,6 +18,11 @@ export default function App() {
         <ThemeProvider>
           <ScrollToTop />
           <StyledChart />
+          <Routes>
+            {/* Use Navigate to redirect */}
+            <Route path="/" element={<Navigate to="/dashboard/app" />} />
+            {/* Define other routes */}
+          </Routes>
           <Router />
         </ThemeProvider>
       </BrowserRouter>

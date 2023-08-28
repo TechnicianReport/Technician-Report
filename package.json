@@ -5,7 +5,7 @@
   "version": "1.7.0",
   "private": false,
   "scripts": {
-    "start": "react-scripts start",
+    "start": "react-scripts start --port 3000/dashboard/app",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
@@ -50,6 +50,7 @@
     "@emotion/styled": "^11.10.6",
     "@faker-js/faker": "^7.6.0",
     "@iconify/react": "^4.1.0",
+    "@mui/icons-material": "^5.14.6",
     "@mui/lab": "^5.0.0-alpha.103",
     "@mui/material": "^5.11.10",
     "@mui/x-date-pickers": "^6.11.2",
