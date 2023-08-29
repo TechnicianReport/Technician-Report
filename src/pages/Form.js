@@ -19,6 +19,7 @@ export default function ProductsPage() {
   const [isDialogOpen2, setDialogOpen2] = useState(false);
   const [isDialogOpen3, setDialogOpen3] = useState(false);
   const [isDialogOpen4, setDialogOpen4] = useState(false);
+  const [isDialogOpen5, setDialogOpen5] = useState(false);
 
   const dialogContent1 = (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
@@ -187,6 +188,39 @@ export default function ProductsPage() {
 </div>
   );
 
+  const dialogContent5 = (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+  <h4 style={{ marginLeft: '20px' }}>Control No. : 000-000-001</h4>
+
+  <input type="date" id="date" style={{ marginLeft: '20px' }} />
+  <br />
+  <input type="text" placeholder="Issue" style={{ marginLeft: '20px' }} />
+  <br />
+  <input type="text" placeholder="Description" style={{ marginLeft: '20px' }} />
+  <br />
+  <input type="text" placeholder="Action Taken" style={{ marginLeft: '20px' }} />
+  <br />
+  <input type="text" placeholder="Solution" style={{ marginLeft: '20px' }} />
+  <br />
+  
+  <br />
+  <input type="text" placeholder="Enter Remarks" style={{ marginLeft: '20px' }} />
+  <br />
+  <input type="text" placeholder="Enter Requisitioner" style={{ marginLeft: '20px' }} />
+  <br />
+  <div>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <Button variant="contained" color="primary">
+      Save
+    </Button> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+    <Button variant="contained" color="secondary">
+      Clear
+    </Button>
+  </div>
+</div>
+  );
+
   const openDialog1 = () => {
     setDialogOpen1(true);
   };
@@ -212,12 +246,21 @@ export default function ProductsPage() {
   };
 
   const openDialog4 = () => {
-    setDialogOpen3(true);
+    setDialogOpen4(true);
   };
 
   const closeDialog4 = () => {
-    setDialogOpen3(false);
+    setDialogOpen4(false);
   };
+
+  const openDialog5 = () => {
+    setDialogOpen4(true);
+  };
+
+  const closeDialog5 = () => {
+    setDialogOpen5(false);
+  };
+
   const handleTypographyClick1 = () => {
     openDialog1();
   };
@@ -233,6 +276,11 @@ export default function ProductsPage() {
   const handleTypographyClick4 = () => {
     openDialog4();
   };
+
+  const handleTypographyClick5 = () => {
+    openDialog5();
+  };
+
 
 
 
@@ -309,7 +357,7 @@ export default function ProductsPage() {
             onClick={handleTypographyClick1}
             sx={{ cursor: 'pointer' }}
           >
-            Service Request Form
+            New
           </Typography>
         </Link>
         <Dialog open={isDialogOpen1} onClose={closeDialog1}>
@@ -329,7 +377,7 @@ export default function ProductsPage() {
                 onClick={handleTypographyClick2}
                 sx={{ cursor: 'pointer' }}
                 >
-                  Borrowers Item Form
+                  Pending
                 </Typography>
               </Link>
               <Dialog open={isDialogOpen2} onClose={closeDialog2}>
@@ -348,7 +396,7 @@ export default function ProductsPage() {
                 onClick={handleTypographyClick3}
                 sx={{ cursor: 'pointer' }}
                 >
-                  Request Item Forms 
+                  Completed
                 </Typography>
               </Link>
               <Dialog open={isDialogOpen3} onClose={closeDialog3}>
@@ -367,11 +415,30 @@ export default function ProductsPage() {
                 onClick={handleTypographyClick4}
                 sx={{ cursor: 'pointer' }}
                 >
-                  Inspection Report Forms 
+                  Cancelled
                 </Typography>
               </Link>
               <Dialog open={isDialogOpen4} onClose={closeDialog4}>
           {dialogContent4}
+        </Dialog>
+            </Stack>
+          </Card>
+
+          <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
+            <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
+              {/* <StyledProductImg alt={name} src={cover} /> */}
+            </Box>
+            <Stack spacing={2} sx={{ p: 3 }}>
+              <Link color="inherit" underline="hover">
+                <Typography variant="subtitle2"
+                onClick={handleTypographyClick5}
+                sx={{ cursor: 'pointer' }}
+                >
+                  Inventory List
+                </Typography>
+              </Link>
+              <Dialog open={isDialogOpen5} onClose={closeDialog5}>
+          {dialogContent5}
         </Dialog>
             </Stack>
           </Card>

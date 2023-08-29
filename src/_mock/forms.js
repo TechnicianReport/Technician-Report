@@ -4,10 +4,10 @@ import { sample } from 'lodash';
 // ----------------------------------------------------------------------
 
 const FORMS = [
-  'Service Request',
-  'Borrow Item',
-  'Request Item',
-  'Inspection Report',
+  'New',
+  'Pending',
+  'Completed/Cancelled',
+  'Inventory List',
 
 ];
 // const PRODUCT_COLOR = ['#00AB55', '#000000', '#FFFFFF', '#FFC0CB', '#FF4842', '#1890FF', '#94D82D', '#FFC107'];
