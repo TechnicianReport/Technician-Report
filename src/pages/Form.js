@@ -324,7 +324,7 @@ export default function ProductsPage() {
       </Helmet>
 
       <Container>
-        <Typography variant="h2" sx={{ mb: 5 }}>
+        <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }} >
           Forms
         </Typography>
 
@@ -434,7 +434,7 @@ export default function ProductsPage() {
                 onClick={handleTypographyClick5}
                 sx={{ cursor: 'pointer' }}
                 >
-                  Inventory List
+                  Inventory Listdfdsdfasds
                 </Typography>
               </Link>
               <Dialog open={isDialogOpen5} onClose={closeDialog5}>

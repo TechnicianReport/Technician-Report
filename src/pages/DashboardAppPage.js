@@ -34,7 +34,7 @@ export default function DashboardAppPage() {
       </Helmet>
 
       <Container maxWidth="xl">
-        <Typography variant="h2" sx={{ mb: 5 }}>
+        <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }}>
           CICT Technician Report
         </Typography>
 

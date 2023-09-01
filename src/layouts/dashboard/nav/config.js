@@ -21,19 +21,19 @@ const navConfig = [
     children: [
       {
         title: 'Service Request Form',
-        path: '/dashboard/form/service-request',
+        path: '/dashboard/service_request',
       },
       {
         title: 'Borrowers Item Form',
-        path: '/dashboard/form/borrowers-item',
+        path: '/dashboard/borrowers_item',
       },
       {
         title: 'Request Item Form',
-        path: '/dashboard/form/request-item',
+        path: '/dashboard/request_item',
       },
       {
         title: 'Inspection Report Form',
-        path: '/dashboard/form/inspection-report',
+        path: '/dashboard/inspection_report',
       },
     ],
   },
