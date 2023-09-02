@@ -35,11 +35,11 @@ import USERLIST from '../_mock/user';
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'Name', alignRight: false },
-  { id: 'company', label: 'Company', alignRight: false },
-  { id: 'role', label: 'Role', alignRight: false },
-  { id: 'isVerified', label: 'Verified', alignRight: false },
-  { id: 'status', label: 'Status', alignRight: false },
+  { id: 'name', label: 'Faculty Name', alignRight: false },
+  { id: 'company', label: 'Location/Room', alignRight: false },
+  { id: 'role', label: 'Control No.', alignRight: false },
+  { id: 'isVerified', label: 'Approved', alignRight: false },
+  { id: 'status', label: 'Date', alignRight: false },
   { id: '' },
 ];
 
@@ -156,16 +156,16 @@ export default function UserPage() {
   return (
     <>
       <Helmet>
-        <title> User | Minimal UI </title>
+        <title> Borrowers' Items | Minimal UI </title>
       </Helmet>
 
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Typography variant="h4" gutterBottom>
-            User
+            Borrowers' Items
           </Typography>
           <Button onClick={handlebtnClick} variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
-            New User
+            New
           </Button>
         </Stack>
 
