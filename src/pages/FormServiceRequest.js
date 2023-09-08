@@ -1,28 +1,14 @@
 import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getFirestore, collection, query, onSnapshot, addDoc } from '@firebase/firestore';
+import { initializeApp } from 'firebase/app';
+
+
 // @mui
-import {
-  Card,
-  Table,
-  Stack,
-  Paper,
-  Avatar,
-  Button,
-  Popover,
-  Checkbox,
-  TableRow,
-  MenuItem,
-  TableBody,
-  TableCell,
-  Container,
-  Typography,
-  IconButton,
-  TableContainer,
-  TablePagination,
-} from '@mui/material';
+import {Card,Table,Stack,Paper,Avatar,Button,Popover,Checkbox,TableRow,MenuItem,TableBody,TableCell,Container,Typography,IconButton,TableContainer,TablePagination,} from '@mui/material';
 // components
 import Label from '../components/label';
 import Iconify from '../components/iconify';
@@ -31,8 +17,20 @@ import Scrollbar from '../components/scrollbar';
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 // mock
 import USERLIST from '../_mock/user';
-// import { FirebaseApp } from 'firebase/app';
-// ----------------------------------------------------------------------
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDHFEWRU949STT98iEDSYe9Rc-WxcL3fcc",
+  authDomain: "wp4-technician-dms.firebaseapp.com",
+  projectId: "wp4-technician-dms",
+  storageBucket: "wp4-technician-dms.appspot.com",
+  messagingSenderId: "1065436189229",
+  appId: "1:1065436189229:web:88094d3d71b15a0ab29ea4"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+
+// Initialize Firestore
+const firestore = getFirestore(firebaseApp);
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Faculty Name', alignRight: false },
@@ -42,8 +40,6 @@ const TABLE_HEAD = [
   { id: 'status', label: 'Date', alignRight: false },
   { id: '' },
 ];
-
-// ----------------------------------------------------------------------
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -74,7 +70,67 @@ function applySortFilter(array, comparator, query) {
   return stabilizedThis.map((el) => el[0]);
 }
 
+const app = initializeApp(firebaseConfig); // Initialize the Firebase app
+const db = getFirestore(app);
+
 export default function UserPage() {
+
+  // ---------------------------
+
+  const [ControlNum, setControlNum] = useState('');
+  const [Date, setDate] = useState('');
+  const [FullName, setFullName] = useState('');
+  const [LocationRoom, setLocationRoom] = useState('');
+  const [Requisitioner, setRequisitioner] = useState('');
+  const [Services, setServices] = useState('');
+
+  const handleControlNumChange = (event) => {
+    setControlNum(event.target.value);
+  };
+  const handleDateChange = (event) => {
+    setDate(event.target.value);
+  };
+  const handleFullNameChange = (event) => {
+    setFullName(event.target.value);
+  };
+  const handleLocationRoomChange = (event) => {
+    setLocationRoom(event.target.value);
+  };
+  const handleRequisitionerChange = (event) => {
+    setRequisitioner(event.target.value);
+  };
+  const handleServicesChange = (event) => {
+    setServices(event.target.value);
+  };
+
+
+  const addDataToFirestore = async (e) => {
+    e.preventDefault(); // Prevent the form from reloading the page
+  
+    try {
+      // Reference to the "ServiceRequest" document in the "Forms" collection
+      const docRef = db.collection('Forms').doc('ServiceRequest');
+  
+      // Data to be added to Firestore
+      const data = {
+        ControlNum,
+        Date,
+        FullName,
+        LocationRoom,
+        Requisitioner,
+        Services,
+      };
+  
+      // Add data to Firestore
+      await docRef.set(data);
+  
+      // Data has been successfully added
+      console.log('Data added to Firestore successfully');
+    } catch (error) {
+      console.error('Error adding data to Firestore:', error);
+    }
+  };
+// ---------------------------
   const [open, setOpen] = useState(null);
 
   const [page, setPage] = useState(0);
@@ -296,6 +352,59 @@ export default function UserPage() {
           Delete
         </MenuItem>
       </Popover>
+
+      
+
+      <form onSubmit={(e) => {
+    e.preventDefault(); // Prevents the form from reloading the page
+    addDataToFirestore(); // Call the function with parentheses
+}}>
+    {<div>
+      <input
+  type="text"
+  placeholder="Control Number"
+  value={ControlNum}
+  onChange={handleControlNumChange}
+/>
+<br />
+<input
+  type="text"
+  placeholder="Date"
+  value={Date}
+  onChange={handleDateChange}
+/>
+<br />
+<input
+  type="text"
+  placeholder="Full Name"
+  value={FullName}
+  onChange={handleFullNameChange}
+/>
+<br />
+<input
+  type="text"
+  placeholder="Location/Room"
+  value={LocationRoom}
+  onChange={handleLocationRoomChange}
+/>
+<br />
+<input
+  type="text"
+  placeholder="Requisitioner"
+  value={Requisitioner}
+  onChange={handleRequisitionerChange}
+/>
+<br />
+<input
+  type="text"
+  placeholder="Services"
+  value={Services}
+  onChange={handleServicesChange}
+/>
+    </div>}
+    <button type="submit">Submit</button>
+    </form>
+
     </>
   );
 }

@@ -60,16 +60,23 @@ const navConfig = [
     icon: icon('ic_lock'),
     children: [
       {
-        title: 'Inspection Report',
+        title: 'Property Transfer Report',
         path: '/dashboard/report/inspection',
       },
-      {
-        title: 'Receipt of Returned Semi Expandable Property',
-        path: '/dashboard/report/rrsp',
-      },
+
       {
         title: 'Inventory Transfer Report',
         path: '/dashboard/report/itr',
+      },
+
+      {
+        title: 'Monthly Assessment Report',
+        path: '/dashboard/report/mar',
+      },
+
+      {
+        title: 'Inventory Laboratory Form',
+        path: '/dashboard/report/ilf',
       },
     ],
   },
