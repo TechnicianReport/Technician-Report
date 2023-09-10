@@ -3,12 +3,16 @@ import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getFirestore, collection, query, onSnapshot, addDoc } from '@firebase/firestore';
+import { getFirestore, collection, query, onSnapshot, addDoc, doc } from '@firebase/firestore';
 import { initializeApp } from 'firebase/app';
 
 
 // @mui
-import {Card,Table,Stack,Paper,Avatar,Button,Popover,Checkbox,TableRow,MenuItem,TableBody,TableCell,Container,Typography,IconButton,TableContainer,TablePagination,} from '@mui/material';
+import {Card,Table,Stack,Paper,Avatar,Popover,Checkbox,TableRow,
+        MenuItem,TableBody,TableCell,Container,Typography,IconButton,TableContainer,
+        TablePagination,Dialog, DialogTitle, DialogContent, DialogActions, Button, 
+        Backdrop, Snackbar} from '@mui/material';
+
 // components
 import Label from '../components/label';
 import Iconify from '../components/iconify';
@@ -27,10 +31,23 @@ const firebaseConfig = {
   appId: "1:1065436189229:web:88094d3d71b15a0ab29ea4"
 };
 
+// Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
 
-// Initialize Firestore
-const firestore = getFirestore(firebaseApp);
+// Initialize Firestore db
+const db = getFirestore(firebaseApp);
+
+// Access main collection
+const mainCollectionRef = collection(db, "WP4-TECHNICIAN-DMS");
+
+// Access FORMS document under main collection
+const formsDocRef = doc(mainCollectionRef, "FORMS");
+
+// Add to subcollection 
+const serviceRequestCollectionRef = collection(formsDocRef, "SERVICE-REQUEST");
+
+// Query selector from my form that I made for inputs
+const form = document.querySelector('form');
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Faculty Name', alignRight: false },
@@ -70,68 +87,44 @@ function applySortFilter(array, comparator, query) {
   return stabilizedThis.map((el) => el[0]);
 }
 
-const app = initializeApp(firebaseConfig); // Initialize the Firebase app
-const db = getFirestore(app);
+
 
 export default function UserPage() {
 
-  // ---------------------------
+  const [formData, setFormData] = useState({
+   
+  });
 
-  const [ControlNum, setControlNum] = useState('');
-  const [Date, setDate] = useState('');
-  const [FullName, setFullName] = useState('');
-  const [LocationRoom, setLocationRoom] = useState('');
-  const [Requisitioner, setRequisitioner] = useState('');
-  const [Services, setServices] = useState('');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const handleControlNumChange = (event) => {
-    setControlNum(event.target.value);
-  };
-  const handleDateChange = (event) => {
-    setDate(event.target.value);
-  };
-  const handleFullNameChange = (event) => {
-    setFullName(event.target.value);
-  };
-  const handleLocationRoomChange = (event) => {
-    setLocationRoom(event.target.value);
-  };
-  const handleRequisitionerChange = (event) => {
-    setRequisitioner(event.target.value);
-  };
-  const handleServicesChange = (event) => {
-    setServices(event.target.value);
+    const { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services } = formData;
+
+    const docData = {
+      ControlNum,
+      Date,
+      FullName,
+      LocationRoom,
+      Requisitioner,
+      Services,
+    };
+
+      try {
+        await addDoc(serviceRequestCollectionRef, docData);
+        setOpen(false);
+        setSnackbarOpen(true);
+      } catch (error) {
+        console.error(error);
+        alert("Input cannot be incomplete");
+      }
+  
+     
+  
   };
 
+  const [open, setOpen] = useState(false);
 
-  const addDataToFirestore = async (e) => {
-    e.preventDefault(); // Prevent the form from reloading the page
-  
-    try {
-      // Reference to the "ServiceRequest" document in the "Forms" collection
-      const docRef = db.collection('Forms').doc('ServiceRequest');
-  
-      // Data to be added to Firestore
-      const data = {
-        ControlNum,
-        Date,
-        FullName,
-        LocationRoom,
-        Requisitioner,
-        Services,
-      };
-  
-      // Add data to Firestore
-      await docRef.set(data);
-  
-      // Data has been successfully added
-      console.log('Data added to Firestore successfully');
-    } catch (error) {
-      console.error('Error adding data to Firestore:', error);
-    }
-  };
-// ---------------------------
-  const [open, setOpen] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   const [page, setPage] = useState(0);
 
@@ -145,13 +138,21 @@ export default function UserPage() {
 
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+  
   const handleOpenMenu = (event) => {
     setOpen(event.currentTarget);
   };
 
-  const handleCloseMenu = () => {
-    setOpen(null);
-  };
+  // const handleCloseMenu = () => {
+  //   setOpen(null);
+  // };
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -167,6 +168,7 @@ export default function UserPage() {
     }
     setSelected([]);
   };
+  
 
   const handleClick = (event, name) => {
     const selectedIndex = selected.indexOf(name);
@@ -203,11 +205,17 @@ export default function UserPage() {
 
   const isNotFound = !filteredUsers.length && !!filterName;
 
+ 
+
   const navigate = useNavigate();
 
-  const handlebtnClick = () => {
-    navigate('/dashboard', { replace: true });
-  };
+  // const handlebtnClick = () => {
+  //   navigate('/dashboard', { replace: true });
+  // };
+
+  // Function for dialog on add user
+  
+  
 
   return (
     <>
@@ -220,9 +228,78 @@ export default function UserPage() {
           <Typography variant="h4" gutterBottom>
             User
           </Typography>
-          <Button onClick={handlebtnClick} variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
+
+           <div> 
+          <Button onClick={handleClickOpen} variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
             New User
           </Button>
+          <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Service Request Form</DialogTitle>
+        <DialogContent>
+           <form onSubmit={handleSubmit}>
+ <input
+        type="text"
+        name="ControlNum"
+        placeholder="Control Number"
+        value={formData.ControlNum}
+        onChange={(e) => setFormData({ ...formData, ControlNum: e.target.value })}
+      />
+      <input
+        type="date"
+        name="Date"
+        placeholder="Date"
+        value={formData.Date}
+        onChange={(e) => setFormData({ ...formData, Date: e.target.value })}
+      />
+      <input
+        type="text"
+        name="FullName"
+        placeholder="Full Name"
+        value={formData.FullName}
+        onChange={(e) => setFormData({ ...formData, FullName: e.target.value })}
+      />
+      <input
+        type="text"
+        name="LocationRoom"
+        placeholder="Location/Room"
+        value={formData.LocationRoom}
+        onChange={(e) => setFormData({ ...formData, LocationRoom: e.target.value })}
+        />
+        <input
+        type="text"
+        name="Requisitioner"
+        placeholder="Requisitioner"
+        value={formData.Requisitioner}
+        onChange={(e) => setFormData({ ...formData, Requisitioner: e.target.value })}
+        />
+        <input
+        type="text"
+        name="Services"
+        placeholder="Services"
+        value={formData.Services}
+        onChange={(e) => setFormData({ ...formData, Services: e.target.value })}
+        />
+
+        </form>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleSubmit} type="submit" >
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Backdrop open={open} />
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+        message="The Service Request Document was created successfully!"
+      />
+          </div> 
+    
         </Stack>
 
         <Card>
@@ -270,11 +347,11 @@ export default function UserPage() {
                           <Label color={(status === 'banned' && 'error') || 'success'}>{sentenceCase(status)}</Label>
                         </TableCell>
 
-                        <TableCell align="right">
+                        {/* <TableCell align="right">
                           <IconButton size="large" color="inherit" onClick={handleOpenMenu}>
                             <Iconify icon={'eva:more-vertical-fill'} />
                           </IconButton>
-                        </TableCell>
+                        </TableCell> */}
                       </TableRow>
                     );
                   })}
@@ -324,7 +401,7 @@ export default function UserPage() {
         </Card>
       </Container>
 
-      <Popover
+      {/* <Popover
         open={Boolean(open)}
         anchorEl={open}
         onClose={handleCloseMenu}
@@ -351,60 +428,11 @@ export default function UserPage() {
           <Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
           Delete
         </MenuItem>
-      </Popover>
+      </Popover> */}
 
-      
-
-      <form onSubmit={(e) => {
-    e.preventDefault(); // Prevents the form from reloading the page
-    addDataToFirestore(); // Call the function with parentheses
-}}>
-    {<div>
-      <input
-  type="text"
-  placeholder="Control Number"
-  value={ControlNum}
-  onChange={handleControlNumChange}
-/>
-<br />
-<input
-  type="text"
-  placeholder="Date"
-  value={Date}
-  onChange={handleDateChange}
-/>
-<br />
-<input
-  type="text"
-  placeholder="Full Name"
-  value={FullName}
-  onChange={handleFullNameChange}
-/>
-<br />
-<input
-  type="text"
-  placeholder="Location/Room"
-  value={LocationRoom}
-  onChange={handleLocationRoomChange}
-/>
-<br />
-<input
-  type="text"
-  placeholder="Requisitioner"
-  value={Requisitioner}
-  onChange={handleRequisitionerChange}
-/>
-<br />
-<input
-  type="text"
-  placeholder="Services"
-  value={Services}
-  onChange={handleServicesChange}
-/>
-    </div>}
-    <button type="submit">Submit</button>
-    </form>
 
     </>
   );
 }
+
+
