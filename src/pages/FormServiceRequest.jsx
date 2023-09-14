@@ -3,7 +3,7 @@ import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getFirestore, collection, query, onSnapshot, addDoc, doc } from '@firebase/firestore';
+import { getFirestore, collection, query, onSnapshot, addDoc, doc, getDocs} from '@firebase/firestore';
 import { initializeApp } from 'firebase/app';
 
 
@@ -11,7 +11,7 @@ import { initializeApp } from 'firebase/app';
 import {Card,Table,Stack,Paper,Avatar,Popover,Checkbox,TableRow,
         MenuItem,TableBody,TableCell,Container,Typography,IconButton,TableContainer,
         TablePagination,Dialog, DialogTitle, DialogContent, DialogActions, Button, 
-        Backdrop, Snackbar} from '@mui/material';
+        Backdrop, Snackbar, TableHead, CircularProgress, TextField} from '@mui/material';
 
 // components
 import Label from '../components/label';
@@ -91,6 +91,36 @@ function applySortFilter(array, comparator, query) {
 
 export default function UserPage() {
 
+  const [fetchedData, setFetchedData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchAllDocuments = async () => {
+    setIsLoading(true);
+
+    try {
+      const querySnapshot = await getDocs(serviceRequestCollectionRef);
+      const dataFromFirestore = [];
+
+      querySnapshot.forEach((doc) => {
+        // Handle each document here
+        const data = doc.data();
+        dataFromFirestore.push(data);
+      });
+
+      setFetchedData(dataFromFirestore);
+
+    } catch (error) {
+      console.error("Error fetching data from Firestore: ", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllDocuments();
+   }, []);
+
+
   const [formData, setFormData] = useState({
    
   });
@@ -137,6 +167,11 @@ export default function UserPage() {
   const [filterName, setFilterName] = useState('');
 
   const [rowsPerPage, setRowsPerPage] = useState(5);
+
+ 
+
+  // Fetch data from Firestore and update fetchedData state
+
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -237,42 +272,42 @@ export default function UserPage() {
         <DialogTitle>Service Request Form</DialogTitle>
         <DialogContent>
            <form onSubmit={handleSubmit}>
- <input
+ <TextField
         type="text"
         name="ControlNum"
         placeholder="Control Number"
         value={formData.ControlNum}
         onChange={(e) => setFormData({ ...formData, ControlNum: e.target.value })}
-      />
-      <input
+      /><br/>
+      <TextField
         type="date"
         name="Date"
         placeholder="Date"
         value={formData.Date}
         onChange={(e) => setFormData({ ...formData, Date: e.target.value })}
-      />
-      <input
+      /><br/>
+      <TextField
         type="text"
         name="FullName"
         placeholder="Full Name"
         value={formData.FullName}
         onChange={(e) => setFormData({ ...formData, FullName: e.target.value })}
-      />
-      <input
+      /><br/>
+      <TextField
         type="text"
         name="LocationRoom"
         placeholder="Location/Room"
         value={formData.LocationRoom}
         onChange={(e) => setFormData({ ...formData, LocationRoom: e.target.value })}
-        />
-        <input
+        /><br/>
+        <TextField
         type="text"
         name="Requisitioner"
         placeholder="Requisitioner"
         value={formData.Requisitioner}
         onChange={(e) => setFormData({ ...formData, Requisitioner: e.target.value })}
-        />
-        <input
+        /><br/>
+        <TextField
         type="text"
         name="Services"
         placeholder="Services"
@@ -313,7 +348,7 @@ export default function UserPage() {
                   orderBy={orderBy}
                   headLabel={TABLE_HEAD}
                   rowCount={USERLIST.length}
-                  numSelected={selected.length}
+                  numSelected={selected.length} 
                   onRequestSort={handleRequestSort}
                   onSelectAllClick={handleSelectAllClick}
                 />
@@ -430,7 +465,42 @@ export default function UserPage() {
         </MenuItem>
       </Popover> */}
 
+<Container>
+      <Button onClick={fetchAllDocuments} variant="contained">
+        Fetch Data
+      </Button>
 
+      {isLoading ? (
+        <CircularProgress />
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Control Number</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell>Full Name</TableCell>
+                <TableCell>Location/Room</TableCell>
+                <TableCell>Requesitioner</TableCell>
+                <TableCell>Services</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {fetchedData.map((item, index) => (
+                <TableRow key={index}>
+                  <TableCell>{item.ControlNum}</TableCell>
+                  <TableCell>{item.Date}</TableCell>
+                  <TableCell>{item.FullName}</TableCell>
+                  <TableCell>{item.LocationRoom}</TableCell>
+                  <TableCell>{item.Requisitioner}</TableCell>
+                  <TableCell>{item.Services}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+    </Container>
     </>
   );
 }
