@@ -318,12 +318,17 @@ export default function UserPage() {
         </form>
         </DialogContent>
         <DialogActions>
+        <Button variant="contained" onClick={handleSubmit} type="submit" >
+            Clear
+          </Button>
           <Button variant="contained" onClick={handleClose}>
             Cancel
           </Button>
           <Button variant="contained" onClick={handleSubmit} type="submit" >
             Create
           </Button>
+         
+
         </DialogActions>
       </Dialog>
       <Backdrop open={open} />
