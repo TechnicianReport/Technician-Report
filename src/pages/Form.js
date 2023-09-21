@@ -327,25 +327,23 @@ export default function ProductsPage() {
         <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }} >
           Forms
         </Typography>
-
-
-        
-
-
-
         <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
-        {/* <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} /> */}
+        { <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} /> }
           <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1 }}>
-            {/* <ProductFilterSidebar
+            {/* { <ProductFilterSidebar
               openFilter={openFilter}
               onOpenFilter={handleOpenFilter}
               onCloseFilter={handleCloseFilter}
-            /> */}
-            {/* <ProductSort /> */}
+            /> }
+            { <ProductSort /> } */}
           </Stack>
         </Stack>
 
-        <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1 }}>
+
+
+
+
+        <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1, flexWrap: 'wrap'}}>
         <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative' }}>
       <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
         {/* <StyledProductImg alt={name} src={cover} /> */}
@@ -357,7 +355,7 @@ export default function ProductsPage() {
             onClick={handleTypographyClick1}
             sx={{ cursor: 'pointer' }}
           >
-            New
+            Total SRF:
           </Typography>
         </Link>
         <Dialog open={isDialogOpen1} onClose={closeDialog1}>
@@ -377,7 +375,7 @@ export default function ProductsPage() {
                 onClick={handleTypographyClick2}
                 sx={{ cursor: 'pointer' }}
                 >
-                  Pending
+                  Total BIF:
                 </Typography>
               </Link>
               <Dialog open={isDialogOpen2} onClose={closeDialog2}>
@@ -396,7 +394,7 @@ export default function ProductsPage() {
                 onClick={handleTypographyClick3}
                 sx={{ cursor: 'pointer' }}
                 >
-                  Completed
+                  Total RIF:
                 </Typography>
               </Link>
               <Dialog open={isDialogOpen3} onClose={closeDialog3}>
@@ -404,6 +402,7 @@ export default function ProductsPage() {
         </Dialog>
             </Stack>
           </Card>
+      
 
           <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
             <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
@@ -415,11 +414,32 @@ export default function ProductsPage() {
                 onClick={handleTypographyClick4}
                 sx={{ cursor: 'pointer' }}
                 >
-                  Cancelled
+                  Total IRF:
                 </Typography>
               </Link>
               <Dialog open={isDialogOpen4} onClose={closeDialog4}>
           {dialogContent4}
+        </Dialog>
+            </Stack>
+          </Card>
+          </Stack>
+
+        <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1, flexWrap: 'wrap'}}>
+          <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
+            <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
+              {/* <StyledProductImg alt={name} src={cover} /> */}
+            </Box>
+            <Stack spacing={2} sx={{ p: 3 }}>
+              <Link color="inherit" underline="hover">
+                <Typography variant="subtitle2"
+                onClick={handleTypographyClick5}
+                sx={{ cursor: 'pointer' }}
+                >
+                  Total Forms:
+                </Typography>
+              </Link>
+              <Dialog open={isDialogOpen5} onClose={closeDialog5}>
+          {dialogContent5}
         </Dialog>
             </Stack>
           </Card>
@@ -434,7 +454,7 @@ export default function ProductsPage() {
                 onClick={handleTypographyClick5}
                 sx={{ cursor: 'pointer' }}
                 >
-                  Inventory Listdfdsdfasds
+                  Total Archived Forms:
                 </Typography>
               </Link>
               <Dialog open={isDialogOpen5} onClose={closeDialog5}>

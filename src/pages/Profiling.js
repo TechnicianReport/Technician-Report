@@ -188,7 +188,7 @@ export default function ProductsPage() {
       </Helmet>
 
       <Container>
-        <Typography variant="h2" sx={{ mb: 5 }}>
+        <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }}>
           Profiling
         </Typography>
 
@@ -200,12 +200,12 @@ export default function ProductsPage() {
         <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
           <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
           <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1 }}>
-            {/* <ProductFilterSidebar
+            {/* { <ProductFilterSidebar
               openFilter={openFilter}
               onOpenFilter={handleOpenFilter}
               onCloseFilter={handleCloseFilter}
-            /> */}
-            {/* <ProductSort /> */}
+            /> }
+            { <ProductSort /> } */}
           </Stack>
         </Stack>
 
@@ -213,7 +213,7 @@ export default function ProductsPage() {
         <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1 }}>
           <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
             <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
-              <StyledProductImg alt={name} src={cover} />
+              {/* <StyledProductImg alt={name} src={cover} /> */}
             </Box>
             <Stack spacing={2} sx={{ p: 3 }}>
               <Link color="inherit" underline="hover">
@@ -222,7 +222,7 @@ export default function ProductsPage() {
             onClick={handleTypographyClick1}
             sx={{ cursor: 'pointer' }}
           >
-            Memorandum of Receipts
+            Total MR:
           </Typography>
         <Dialog open={isDialogOpen1} onClose={closeDialog1}>
           {dialogContent1}
@@ -233,7 +233,7 @@ export default function ProductsPage() {
 
           <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
             <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
-              <StyledProductImg alt={name} src={cover} />
+              {/* <StyledProductImg alt={name} src={cover} /> */}
             </Box>
             <Stack spacing={2} sx={{ p: 3 }}>
               <Link color="inherit" underline="hover">
@@ -242,7 +242,7 @@ export default function ProductsPage() {
             onClick={handleTypographyClick2}
             sx={{ cursor: 'pointer' }}
           >
-            Condemned Items
+            Total CI:
           </Typography>
         
         <Dialog open={isDialogOpen2} onClose={closeDialog2}>
@@ -251,6 +251,47 @@ export default function ProductsPage() {
               </Link>
             </Stack>
           </Card>
+
+          <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
+            <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
+              {/* <StyledProductImg alt={name} src={cover} /> */}
+            </Box>
+            <Stack spacing={2} sx={{ p: 3 }}>
+              <Link color="inherit" underline="hover">
+              <Typography
+            variant="subtitle2"
+            onClick={handleTypographyClick1}
+            sx={{ cursor: 'pointer' }}
+          >
+            Total Profiling:
+          </Typography>
+        <Dialog open={isDialogOpen1} onClose={closeDialog1}>
+          {dialogContent1}
+        </Dialog>
+              </Link>
+            </Stack>
+          </Card>
+
+          <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
+            <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
+              {/* <StyledProductImg alt={name} src={cover} /> */}
+            </Box>
+            <Stack spacing={2} sx={{ p: 3 }}>
+              <Link color="inherit" underline="hover">
+              <Typography
+            variant="subtitle2"
+            onClick={handleTypographyClick1}
+            sx={{ cursor: 'pointer' }}
+          >
+            Total Archived Profiling:
+          </Typography>
+        <Dialog open={isDialogOpen1} onClose={closeDialog1}>
+          {dialogContent1}
+        </Dialog>
+              </Link>
+            </Stack>
+          </Card>
+
         </Stack>
       </Container>
     </>

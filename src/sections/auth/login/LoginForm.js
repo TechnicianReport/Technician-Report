@@ -90,6 +90,7 @@ export default function LoginForm() {
         variant="contained"
         onClick={handleLogin}
         loading={isLoading}
+        style={{ backgroundColor: '#0073e6', color: 'white' }}
       >
         Login
       </LoadingButton>

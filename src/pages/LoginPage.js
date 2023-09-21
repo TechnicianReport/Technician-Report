@@ -16,6 +16,7 @@ const StyledRoot = styled('div')(({ theme }) => ({
   [theme.breakpoints.up('md')]: {
     display: 'flex',
   },
+  backgroundColor: '#F0F0F0',
 }));
 
 const StyledSection = styled('div')(({ theme }) => ({
@@ -28,14 +29,36 @@ const StyledSection = styled('div')(({ theme }) => ({
   backgroundColor: theme.palette.background.default,
 }));
 
+// const StyledContent = styled('div')(({ theme }) => ({
+//   maxWidth: 480,
+//   margin: 'auto',
+//   minHeight: '100vh',
+//   display: 'flex',
+//   justifyContent: 'center',
+//   flexDirection: 'column',
+//   padding: theme.spacing(8, 7),
+//   backgroundColor: '#FFFFFF',
+//   borderRadius: 16, // Add rounded corners
+//   boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)', // Add shadows
+// }));
+
 const StyledContent = styled('div')(({ theme }) => ({
   maxWidth: 480,
   margin: 'auto',
-  minHeight: '100vh',
+  padding: theme.spacing(8, 7),
+  backgroundColor: '#FFFFFF',
+  borderRadius: 16,
+  boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
   display: 'flex',
-  justifyContent: 'center',
   flexDirection: 'column',
-  padding: theme.spacing(12, 0),
+  alignItems: 'center',
+}));
+
+const ContentContainer = styled('div')(({ theme }) => ({
+  minHeight: '100vh', // Ensure the container takes the full viewport height
+  display: 'flex',
+  justifyContent: 'center', // Center the content horizontally
+  alignItems: 'center', // Center the content vertically
 }));
 
 // ----------------------------------------------------------------------
@@ -49,7 +72,8 @@ export default function LoginPage() {
         <title> Login</title>
       </Helmet>
 
-      <StyledRoot>
+
+      <StyledRoot >
         {/* <Logo
           sx={{
             position: 'fixed',
@@ -67,16 +91,17 @@ export default function LoginPage() {
           </StyledSection>
         )} */}
 
-        <Container maxWidth="sm">
-          <StyledContent>
-            <Typography variant="h4" gutterBottom>
+        <Container maxWidth="sm"  >
+          <ContentContainer> 
+          <StyledContent >
+          <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }} >
               Sign in
             </Typography>
 
-            <Typography variant="body2" sx={{ mb: 5 }}>
+            {/* <Typography variant="body2" sx={{ mb: 5 }}>
               Don’t have an account? {''}
               <Link variant="subtitle2">Get started</Link>
-            </Typography>
+            </Typography> */}
 
             {/* <Stack direction="row" spacing={2}>
               <Button fullWidth size="large" color="inherit" variant="outlined">
@@ -100,8 +125,10 @@ export default function LoginPage() {
 
             <LoginForm />
           </StyledContent>
+          </ContentContainer>
         </Container>
       </StyledRoot>
+      
     </>
   );
 }

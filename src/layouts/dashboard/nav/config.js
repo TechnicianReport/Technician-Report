@@ -24,7 +24,7 @@ const navConfig = [
         path: '/dashboard/service_request',
       },
       {
-        title: 'Borrowers Item Form',
+        title: "Borrower's Items Form",
         path: '/dashboard/borrowers_item',
       },
       {
@@ -45,61 +45,56 @@ const navConfig = [
     children: [
       {
         title: 'Memorandum of Receipts',
-        path: '/dashboard/profiling/mr', // Replace with the actual path
+        path: '/dashboard/profiling_mr', // Replace with the actual path
       },
       {
         title: 'Condemned Items',
-        path: '/dashboard/profiling/condemned', // Replace with the actual path
+        path: '/dashboard/profiling_ci', // Replace with the actual path
       },
     ],
   },
 //               REPORTS
   {
     title: 'Reports',
-    path: '/dashboard/report',
+    path: '/dashboard/reports',
     icon: icon('ic_lock'),
     children: [
       {
         title: 'Property Transfer Report',
-        path: '/dashboard/report/inspection',
+        path: '/dashboard/reports_ptr',
       },
 
       {
         title: 'Inventory Transfer Report',
-        path: '/dashboard/report/itr',
+        path: '/dashboard/reports_itr',
       },
 
       {
         title: 'Monthly Assessment Report',
-        path: '/dashboard/report/mar',
+        path: '/dashboard/reports_mar',
       },
 
       {
         title: 'Inventory Laboratory Form',
-        path: '/dashboard/report/ilf',
+        path: '/dashboard/reports_ilf',
       },
     ],
   },
 
   {
     title: 'Archives',
-    path: '/dashboard/user',
+    path: '/dashboard/archives',
     icon: icon('ic_blog'),
   },
-  // {
-  //   title: 'Not found',
-  //   path: '/404',
-  //   icon: icon('ic_disabled'),
-  // },
   {
-    title: 'user',
+    title: 'Users',
     path: '/dashboard/user',
     icon: icon('ic_user'),
   },
   {
-    title: 'login',
-    path: '/login',
-    icon: icon('ic_lock'),
+    title: 'Error',
+    path: '/404',
+    icon: icon('ic_disabled'),
   },
 ];
 

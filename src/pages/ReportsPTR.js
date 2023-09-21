@@ -156,13 +156,13 @@ export default function UserPage() {
   return (
     <>
       <Helmet>
-        <title> Borrowers' Items | Minimal UI </title>
+        <title> Property Transfer Report | Minimal UI </title>
       </Helmet>
 
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-          <Typography variant="h4" gutterBottom>
-            Borrowers' Items
+        <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }}>
+            Property Transfer Report
           </Typography>
           <Button onClick={handlebtnClick} variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
             New

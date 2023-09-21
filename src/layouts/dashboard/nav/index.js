@@ -1,9 +1,10 @@
 import PropTypes from 'prop-types';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 // @mui
 import { styled, alpha } from '@mui/material/styles';
 import { Box, Link, Button, Drawer, Typography, Avatar, Stack } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 // mock
 import account from '../../../_mock/account';
 // hooks
@@ -13,7 +14,6 @@ import Logo from '../../../components/logo';
 import Scrollbar from '../../../components/scrollbar';
 import NavSection from '../../../components/nav-section';
 import Cict from './bsu.png';
-
 //
 import navConfig from './config';
 import AccountPopover from '../header/AccountPopover';
@@ -38,7 +38,7 @@ Nav.propTypes = {
   onCloseNav: PropTypes.func,
 };
 
-export default function Nav({ openNav, onCloseNav }) {
+export default function Nav({ openNav, onCloseNav, setOpenNav }) {
   const { pathname } = useLocation();
 
   const isDesktop = useResponsive('up', 'lg');
@@ -72,9 +72,9 @@ export default function Nav({ openNav, onCloseNav }) {
       <Box sx={{ flexGrow: 1 }} />
 
       <Box sx={{ mb: 5, mx: 2.5 }} >
-        <Link underline="none">
+      {/* <Link underline="none">
           <StyledAccount>
-            {/* <Avatar src={account.photoURL} alt="photoURL" /> */}
+            { <Avatar src={account.photoURL} alt="photoURL" /> }
 
             <AccountPopover />
 
@@ -88,9 +88,9 @@ export default function Nav({ openNav, onCloseNav }) {
               </Typography>
               
             </Box>
-            {/* <Avatar src={account.photoURL} alt="photoURL" /> */}
+            { <Avatar src={account.photoURL} alt="photoURL" /> }
           </StyledAccount>
-        </Link>
+        </Link> */}
       </Box>
 
       {/* <Box sx={{ px: 2.5, pb: 3, mt: 10 }}>
@@ -127,33 +127,39 @@ export default function Nav({ openNav, onCloseNav }) {
         width: { lg: NAV_WIDTH },
       }}
     >
+     <Button
+  onClick={() => setOpenNav(!openNav)}
+  sx={{ mb: 2, color: 'black' }} // Use color: 'black' to set text color
+>
+  {openNav ? <MenuIcon /> : 'Open Sidebar'}
+</Button>
       {isDesktop ? (
         <Drawer
-          open
-          variant="permanent"
-          PaperProps={{
-            sx: {
-              width: NAV_WIDTH,
-              bgcolor: 'background.default',
-              borderRightStyle: 'dashed',
-            },
-          }}
-        >
-          {renderContent}
-        </Drawer>
+        open 
+        variant="permanent"
+        PaperProps={{
+          sx: {
+            width: NAV_WIDTH,
+            bgcolor: '#F2F2F2', // Change this to your desired color
+            borderRightStyle: 'dashed',
+          },
+        }}
+      >
+        {renderContent}
+      </Drawer>
       ) : (
         <Drawer
-          open={openNav}
-          onClose={onCloseNav}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          PaperProps={{
-            sx: { width: NAV_WIDTH },
-          }}
-        >
-          {renderContent}
-        </Drawer>
+      open={openNav} // Use the state variable to control the open state
+      onClose={onCloseNav}
+      ModalProps={{
+          keepMounted: true,
+      }}
+      PaperProps={{
+          sx: { width: NAV_WIDTH },
+      }}
+    >
+  {renderContent}
+</Drawer>
       )}
     </Box>
   );

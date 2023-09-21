@@ -156,13 +156,13 @@ export default function UserPage() {
   return (
     <>
       <Helmet>
-        <title> User | Minimal UI </title>
+        <title> Inspection Report Form | Minimal UI </title>
       </Helmet>
 
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
         <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }}>
-            User
+          Inspection Report Form
           </Typography>
           <Button onClick={handlebtnClick} variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
             New User
