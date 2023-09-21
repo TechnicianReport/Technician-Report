@@ -322,12 +322,11 @@ export default function ProductsPage() {
       <Helmet>
         <title>Forms</title>
       </Helmet>
-
+     
+      <Container sx={{ backgroundColor: '#F0EFF6', borderRadius: '10px', paddingBottom: '20px' }}>
       <Container>
-        <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }} >
-          Forms
-        </Typography>
-        <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 5 }}>
+        
+        <Stack direction="row" flexWrap="wrap-reverse" alignItems="center" justifyContent="flex-end" sx={{ mb: 0 }}>
         { <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} /> }
           <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1 }}>
             {/* { <ProductFilterSidebar
@@ -338,6 +337,9 @@ export default function ProductsPage() {
             { <ProductSort /> } */}
           </Stack>
         </Stack>
+        <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff7200' }} >
+          Forms
+        </Typography>
 
 
 
@@ -402,8 +404,7 @@ export default function ProductsPage() {
         </Dialog>
             </Stack>
           </Card>
-      
-
+    
           <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
             <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
               {/* <StyledProductImg alt={name} src={cover} /> */}
@@ -423,8 +424,10 @@ export default function ProductsPage() {
             </Stack>
           </Card>
           </Stack>
-
-        <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1, flexWrap: 'wrap'}}>
+            </Container>
+            
+            <Container> 
+            <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1, flexWrap: 'wrap'}}> 
           <Card sx={{ pt: '10%', height: '300px', width: '250px', position: 'relative'}}>
             <Box sx={{ pt: '10%', height: '100px', width: '100px', position: 'relative' }}>
               {/* <StyledProductImg alt={name} src={cover} /> */}
@@ -464,6 +467,7 @@ export default function ProductsPage() {
           </Card>
 
         </Stack>
+      </Container>
       </Container>
     </>
   );
