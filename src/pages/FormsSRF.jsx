@@ -450,14 +450,14 @@ const handleRowsPerPageChange = (event) => {
         </TableContainer>
       )}
       <Dialog open={archiveDialogOpen} onClose={() => setArchiveDialogOpen(false)}>
-        <DialogTitle>Archive Document</DialogTitle>
+        <DialogTitle>Delete Document</DialogTitle>
         <DialogContent>
-          Are you sure you want to archive this document?
+          Do you want to delete or archive this document?
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setArchiveDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleConfirmDeleteWithoutArchive} color="error">Delete</Button>
-          <Button onClick={handleConfirmDelete} color="error">Archive</Button>
+          <Button onClick={handleConfirmDelete} style={{ color: 'orange' }}>Archive</Button>
         </DialogActions>
       </Dialog>
        <TablePagination
