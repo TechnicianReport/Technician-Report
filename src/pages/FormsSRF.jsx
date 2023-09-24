@@ -3,7 +3,7 @@ import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getFirestore, collection, query, onSnapshot, doc, getDocs, where, updateDoc, deleteDoc, addDoc } from '@firebase/firestore';
+import { getFirestore, collection, query, onSnapshot, doc, getDocs, where, updateDoc, deleteDoc, addDoc, getDoc, documentId } from '@firebase/firestore';
 import { initializeApp } from 'firebase/app';
 
 
@@ -45,6 +45,11 @@ const formsDocRef = doc(mainCollectionRef, "FORMS");
 
 // Add to subcollection 
 const serviceRequestCollectionRef = collection(formsDocRef, "SERVICE-REQUEST");
+
+// Access ARCHIVES document under main collection
+const archivesRef = doc(mainCollectionRef, "ARCHIVES");
+
+const archivesCollectionRef = collection(archivesRef, "ARCHIVES-DOCUMENT");
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Faculty Name', alignRight: false },
@@ -171,24 +176,76 @@ const handleEditSubmit = async () => {
 };
 
 // This one is for the Delete button
+const [documentToDelete, setDocumentToDelete] = useState(null);
 
-const handleDelete = async (documentId) => {
+const handleConfirmDeleteWithoutArchive = async () => {
   try {
-    // Delete the document from Firestore
-    await deleteDoc(doc(serviceRequestCollectionRef, documentId));
+
+    if (documentToDelete) {
+      const sourceDocumentRef = doc(serviceRequestCollectionRef, documentToDelete);
+      const sourceDocumentData = (await getDoc(sourceDocumentRef)).data();
+   
+    await deleteDoc(doc(serviceRequestCollectionRef, documentToDelete));
     
     // Update the UI by removing the deleted row
-    setFetchedData((prevData) => prevData.filter((item) => item.id !== documentId));
+    setFetchedData((prevData) => prevData.filter((item) => item.id !== documentToDelete));
     
     setSnackbarOpenDelete(true); // Show a success message
+
+    // setDocumentToDelete(documentId);
+    // setArchiveDialogOpen(true);
+    }
   } catch (error) {
     console.error("Error deleting document:", error);
+  } finally {
+    // Close the confirmation dialog
+    setArchiveDialogOpen(false);
+    // Reset the documentToDelete state
+    setDocumentToDelete(null);
   }
 };
 
-const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
+const handleDelete = (documentId) => {
+  // Show a confirmation dialog before deleting
+  setArchiveDialogOpen(true);
+  setDocumentToDelete(documentId);
+};
 
-// This one is for Pagination, adding pages to my table 
+
+
+// This one is for Archives
+  
+const [snackbarOpenArchive, setSnackbarOpenArchive] = useState(false);
+
+const handleConfirmDelete = async () => {
+  try {
+    if (documentToDelete) {
+      const sourceDocumentRef = doc(serviceRequestCollectionRef, documentToDelete);
+      const sourceDocumentData = (await getDoc(sourceDocumentRef)).data();
+
+      // Add the document to the "Archives" collection with a new unique ID
+      await addDoc(archivesCollectionRef, sourceDocumentData);
+
+      // Delete the original document
+      await deleteDoc(doc(serviceRequestCollectionRef, documentToDelete));
+
+      // Update the UI by removing the deleted row
+      setFetchedData((prevData) => prevData.filter((item) => item.id !== documentToDelete));
+
+      // Show a success message
+      setSnackbarOpenArchive(true);
+    }
+  } catch (error) {
+    console.error('Error archiving document:', error);
+  } finally {
+    // Close the confirmation dialog
+    setArchiveDialogOpen(false);
+    // Reset the documentToDelete state
+    setDocumentToDelete(null);
+  }
+};
+
+  // This one is for Archives and Delete together
 
 
 const [page, setPage] = useState(0); // Add these state variables for pagination
@@ -211,6 +268,9 @@ const handleRowsPerPageChange = (event) => {
   setPage(0); // Reset to the first page when changing rows per page
 };
 
+  const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  
 // This one is for idk lol
   const [open, setOpen] = useState(false);
 
@@ -258,7 +318,6 @@ const handleRowsPerPageChange = (event) => {
         value={searchQuery}
         onChange={handleFilterByName}
       /> 
-      
 
       </div> }
 
@@ -390,6 +449,17 @@ const handleRowsPerPageChange = (event) => {
           </Table>
         </TableContainer>
       )}
+      <Dialog open={archiveDialogOpen} onClose={() => setArchiveDialogOpen(false)}>
+        <DialogTitle>Archive Document</DialogTitle>
+        <DialogContent>
+          Are you sure you want to archive this document?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setArchiveDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleConfirmDeleteWithoutArchive} color="error">Delete</Button>
+          <Button onClick={handleConfirmDelete} color="error">Archive</Button>
+        </DialogActions>
+      </Dialog>
        <TablePagination
         rowsPerPageOptions={[4, 10, 25]}
         component="div"
@@ -473,6 +543,14 @@ const handleRowsPerPageChange = (event) => {
         onClose={() => setSnackbarOpenDelete(false)}
         message="The Service Request Document was deleted successfully!"
       />
+
+<Snackbar
+        open={snackbarOpenArchive}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpenArchive(false)}
+        message="The Service Request Document was archived successfully!"
+      />
+
       <Button
       onClick={fetchAllDocuments}
       variant="contained"
