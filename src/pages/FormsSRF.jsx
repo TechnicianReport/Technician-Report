@@ -55,37 +55,6 @@ const TABLE_HEAD = [
   { id: '' },
 ];
 
-function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
-  }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
-  }
-  return 0;
-}
-
-function getComparator(order, orderBy) {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
-
-function applySortFilter(array, comparator, query) {
-  const stabilizedThis = array.map((el, index) => [el, index]);
-  stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-  if (query) {
-    return filter(array, (_user) => _user.name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
-  }
-  return stabilizedThis.map((el) => el[0]);
-}
-
-
-
 export default function UserPage() {
 
   const [fetchedData, setFetchedData] = useState([]);
@@ -106,7 +75,6 @@ export default function UserPage() {
       });
 
       setFetchedData(dataFromFirestore);
-
     } catch (error) {
       console.error("Error fetching data from Firestore: ", error);
     } finally {
@@ -199,7 +167,6 @@ const handleEditSubmit = async () => {
     setSnackbarOpen1(true);
   } catch (error) {
     console.error("Error updating data in Firestore: ", error);
-    console.log(editData);
   }
 };
 
@@ -221,15 +188,35 @@ const handleDelete = async (documentId) => {
 
 const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
 
+// This one is for Pagination, adding pages to my table 
+
+
+const [page, setPage] = useState(0); // Add these state variables for pagination
+const [rowsPerPage, setRowsPerPage] = useState(4);
+
+const startIndex = page * rowsPerPage;
+const endIndex = startIndex + rowsPerPage;
+const displayedData = filteredData.slice(startIndex, endIndex);
+
+
+const handlePageChange = (event, newPage) => {
+  console.log("Page changed to:", newPage); // Log the new page number
+  setPage(newPage);
+};
+
+const handleRowsPerPageChange = (event) => {
+  const newRowsPerPage = parseInt(event.target.value, 10);
+  console.log("Rows per page changed to:", newRowsPerPage); // Log the new rows per page value
+  setRowsPerPage(newRowsPerPage);
+  setPage(0); // Reset to the first page when changing rows per page
+};
+
 // This one is for idk lol
   const [open, setOpen] = useState(false);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   const [snackbarOpen1, setSnackbarOpen1] = useState(false);
-
-
-  const [page, setPage] = useState(0);
 
   const [order, setOrder] = useState('asc');
 
@@ -239,8 +226,6 @@ const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
 
   const [filterName, setFilterName] = useState('');
 
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -249,60 +234,6 @@ const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
   const handleClose = () => {
     setOpen(false);
   };
-  
-  const handleOpenMenu = (event) => {
-    setOpen(event.currentTarget);
-  };
-
-  const handleRequestSort = (event, property) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
-    setOrderBy(property);
-  };
-
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelecteds = USERLIST.map((n) => n.name);
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
-  };
-
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected = [];
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
-    }
-    setSelected(newSelected);
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setPage(0);
-    setRowsPerPage(parseInt(event.target.value, 10));
-  };
-
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - USERLIST.length) : 0;
-
-  const filteredUsers = applySortFilter(USERLIST, getComparator(order, orderBy), filterName);
-
-  const isNotFound = !filteredUsers.length && !!filterName;
-
- 
-
-  const navigate = useNavigate();
-
 
   return (
     <>
@@ -321,13 +252,17 @@ const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
       { <div>
 
-<TextField
-  type="text"
-  placeholder="Search..."
-  value={searchQuery}
-  onChange={handleFilterByName}
-/>
-</div> }
+      <TextField
+        type="text"
+        placeholder="Search..."
+        value={searchQuery}
+        onChange={handleFilterByName}
+      /> 
+      
+
+      </div> }
+
+
         <div style={{ marginLeft: '16px' }}>
           <Button onClick={handleClickOpen} variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
             New User
@@ -338,7 +273,7 @@ const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
         <DialogTitle>Service Request Form</DialogTitle>
         <DialogContent>
            <form onSubmit={handleSubmit}>
- <TextField
+      <TextField
         type="text"
         name="ControlNum"
         placeholder="Control Number"
@@ -397,7 +332,6 @@ const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
 
         </DialogActions>
       </Dialog>
-      {/* <Backdrop open={open} /> */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -425,12 +359,13 @@ const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
                 <TableCell>Location/Room</TableCell>
                 <TableCell>Requesitioner</TableCell>
                 <TableCell>Services</TableCell>
-                <TableCell>Actions</TableCell> 
+                <TableCell>Edit</TableCell> 
+                <TableCell>Delete</TableCell>
               </TableRow>
             </TableHead>
             
             <TableBody>
-              {filteredData.map((item, index) => (
+              {displayedData.map((item, index) => (
                 <TableRow key={index}>
                   <TableCell>{item.ControlNum}</TableCell>
                   <TableCell>{item.Date}</TableCell>
@@ -440,12 +375,12 @@ const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
                   <TableCell>{item.Services}</TableCell>
                   <TableCell>
                     <IconButton onClick={() => handleEditOpen(item)}>
-                      <Iconify icon="eva:edit-2-fill" /> {/* Edit button icon */}
+                      <Iconify icon="material-symbols:edit" color="orange" /> {/* Edit button icon */}
                     </IconButton>
                   </TableCell>
                   <TableCell>
                       <IconButton onClick={() => handleDelete(item.id)}>
-                         <Iconify icon="eva:trash-2-fill" /> {/* Delete button icon */}
+                         <Iconify icon="material-symbols:delete-forever-outline-rounded" color="red" /> {/* Delete button icon */}
                       </IconButton>
                   </TableCell>
               </TableRow>
@@ -455,22 +390,18 @@ const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
           </Table>
         </TableContainer>
       )}
-      
-      <Button
-  onClick={fetchAllDocuments}
-  variant="contained"
-  style={{
-    display: 'flex',
-    justifyContent: 'center',
-    backgroundColor: 'transparent', // Set the background color to transparent
-    border: 'none', // Remove the border
-  }}
->
-  <Iconify icon="system-uicons:refresh-alt" color="blue" width={30} height={30} />
-</Button>
+       <TablePagination
+        rowsPerPageOptions={[4, 10, 25]}
+        component="div"
+        count={filteredData.length} // Make sure this reflects the total number of rows
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
 
-{/* This is the dialog for the Edit button */}
-<Dialog open={editOpen} onClose={handleEditClose}>
+      {/* This is the dialog for the Edit button */}
+      <Dialog open={editOpen} onClose={handleEditClose}>
         <DialogTitle>Edit Service Request</DialogTitle>
         <DialogContent>
           <form onSubmit={handleEditSubmit}>
@@ -542,6 +473,18 @@ const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
         onClose={() => setSnackbarOpenDelete(false)}
         message="The Service Request Document was deleted successfully!"
       />
+      <Button
+      onClick={fetchAllDocuments}
+      variant="contained"
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        backgroundColor: 'transparent', // Set the background color to transparent
+        border: 'none', // Remove the border
+        }}
+      >
+      <Iconify icon="system-uicons:refresh-alt" color="blue" width={30} height={30} />
+    </Button>
     </Container>
 
     </>
