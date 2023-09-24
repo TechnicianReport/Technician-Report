@@ -3,7 +3,7 @@ import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getFirestore, collection, query, onSnapshot, addDoc, doc, getDocs} from '@firebase/firestore';
+import { getFirestore, collection, query, onSnapshot, doc, getDocs, where, updateDoc, deleteDoc, addDoc } from '@firebase/firestore';
 import { initializeApp } from 'firebase/app';
 
 
@@ -45,9 +45,6 @@ const formsDocRef = doc(mainCollectionRef, "FORMS");
 
 // Add to subcollection 
 const serviceRequestCollectionRef = collection(formsDocRef, "SERVICE-REQUEST");
-
-// Query selector from my form that I made for inputs
-const form = document.querySelector('form');
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Faculty Name', alignRight: false },
@@ -104,6 +101,7 @@ export default function UserPage() {
       querySnapshot.forEach((doc) => {
         // Handle each document here
         const data = doc.data();
+        data.id = doc.id; // Add the ID field
         dataFromFirestore.push(data);
       });
 
@@ -140,21 +138,96 @@ export default function UserPage() {
     };
 
       try {
-        await addDoc(serviceRequestCollectionRef, docData);
+        const docRef = await addDoc(serviceRequestCollectionRef, docData);
+
+        const newDocumentId = docRef.id;
+
+        // Create a new data object that includes the ID
+        const newData = { ...docData, id: newDocumentId };
+    
+        // Update the state with the new data, adding it to the table
+        setFetchedData([...fetchedData, newData]);
+
         setOpen(false);
         setSnackbarOpen(true);
       } catch (error) {
         console.error(error);
         alert("Input cannot be incomplete");
       }
-  
-     
-  
   };
 
+  //  This one is for Search bar
+  const [searchQuery, setSearchQuery] = useState('');
+
+
+  const handleFilterByName = (event) => {
+    setPage(0);
+    setSearchQuery(event.target.value);
+  };
+
+  const filteredData = fetchedData.filter((item) =>
+['ControlNum', 'Date', 'FullName', 'LocationRoom', 'Requisitioner', 'Services'].some(
+  (field) =>
+    item[field].toLowerCase().includes(searchQuery.toLowerCase())
+)
+);
+// This one is for the Edit button
+const [editData, setEditData] = useState(null);
+
+
+const [editOpen, setEditOpen] = useState(false);
+
+
+const handleEditOpen = (data) => {
+  if (data && data.id) {
+    setEditData(data); 
+    setEditOpen(true);
+  }
+};
+
+const handleEditClose = () => {
+  setEditData(null); 
+  setEditOpen(false);
+};
+
+const handleEditSubmit = async () => {
+  
+  try {
+    const docRef = doc(serviceRequestCollectionRef, editData.id); // Assuming you have an 'id' field in your data
+    await updateDoc(docRef, editData);
+    handleEditClose();
+    setSnackbarOpen1(true);
+  } catch (error) {
+    console.error("Error updating data in Firestore: ", error);
+    console.log(editData);
+  }
+};
+
+// This one is for the Delete button
+
+const handleDelete = async (documentId) => {
+  try {
+    // Delete the document from Firestore
+    await deleteDoc(doc(serviceRequestCollectionRef, documentId));
+    
+    // Update the UI by removing the deleted row
+    setFetchedData((prevData) => prevData.filter((item) => item.id !== documentId));
+    
+    setSnackbarOpenDelete(true); // Show a success message
+  } catch (error) {
+    console.error("Error deleting document:", error);
+  }
+};
+
+const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
+
+// This one is for idk lol
   const [open, setOpen] = useState(false);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+
+  const [snackbarOpen1, setSnackbarOpen1] = useState(false);
+
 
   const [page, setPage] = useState(0);
 
@@ -168,10 +241,6 @@ export default function UserPage() {
 
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
- 
-
-  // Fetch data from Firestore and update fetchedData state
-
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -184,10 +253,6 @@ export default function UserPage() {
   const handleOpenMenu = (event) => {
     setOpen(event.currentTarget);
   };
-
-  // const handleCloseMenu = () => {
-  //   setOpen(null);
-  // };
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -203,7 +268,6 @@ export default function UserPage() {
     }
     setSelected([]);
   };
-  
 
   const handleClick = (event, name) => {
     const selectedIndex = selected.indexOf(name);
@@ -229,11 +293,6 @@ export default function UserPage() {
     setRowsPerPage(parseInt(event.target.value, 10));
   };
 
-  const handleFilterByName = (event) => {
-    setPage(0);
-    setFilterName(event.target.value);
-  };
-
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - USERLIST.length) : 0;
 
   const filteredUsers = applySortFilter(USERLIST, getComparator(order, orderBy), filterName);
@@ -244,13 +303,6 @@ export default function UserPage() {
 
   const navigate = useNavigate();
 
-  // const handlebtnClick = () => {
-  //   navigate('/dashboard', { replace: true });
-  // };
-
-  // Function for dialog on add user
-  
-  
 
   return (
     <>
@@ -263,11 +315,25 @@ export default function UserPage() {
         <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }}>
             Service Request Form
           </Typography>
+        </Stack>
 
-           <div> 
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+      { <div>
+
+<TextField
+  type="text"
+  placeholder="Search..."
+  value={searchQuery}
+  onChange={handleFilterByName}
+/>
+</div> }
+        <div style={{ marginLeft: '16px' }}>
           <Button onClick={handleClickOpen} variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
             New User
           </Button>
+        </div>   
+          
           <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Service Request Form</DialogTitle>
         <DialogContent>
@@ -331,7 +397,7 @@ export default function UserPage() {
 
         </DialogActions>
       </Dialog>
-      <Backdrop open={open} />
+      {/* <Backdrop open={open} /> */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -359,10 +425,12 @@ export default function UserPage() {
                 <TableCell>Location/Room</TableCell>
                 <TableCell>Requesitioner</TableCell>
                 <TableCell>Services</TableCell>
+                <TableCell>Actions</TableCell> 
               </TableRow>
             </TableHead>
+            
             <TableBody>
-              {fetchedData.map((item, index) => (
+              {filteredData.map((item, index) => (
                 <TableRow key={index}>
                   <TableCell>{item.ControlNum}</TableCell>
                   <TableCell>{item.Date}</TableCell>
@@ -370,7 +438,18 @@ export default function UserPage() {
                   <TableCell>{item.LocationRoom}</TableCell>
                   <TableCell>{item.Requisitioner}</TableCell>
                   <TableCell>{item.Services}</TableCell>
-                </TableRow>
+                  <TableCell>
+                    <IconButton onClick={() => handleEditOpen(item)}>
+                      <Iconify icon="eva:edit-2-fill" /> {/* Edit button icon */}
+                    </IconButton>
+                  </TableCell>
+                  <TableCell>
+                      <IconButton onClick={() => handleDelete(item.id)}>
+                         <Iconify icon="eva:trash-2-fill" /> {/* Delete button icon */}
+                      </IconButton>
+                  </TableCell>
+              </TableRow>
+
               ))}
             </TableBody>
           </Table>
@@ -390,6 +469,79 @@ export default function UserPage() {
   <Iconify icon="system-uicons:refresh-alt" color="blue" width={30} height={30} />
 </Button>
 
+{/* This is the dialog for the Edit button */}
+<Dialog open={editOpen} onClose={handleEditClose}>
+        <DialogTitle>Edit Service Request</DialogTitle>
+        <DialogContent>
+          <form onSubmit={handleEditSubmit}>
+            {/* Fields to edit */}
+            <TextField
+              type="text"
+              name="ControlNum"
+              placeholder="Control Number"
+              value={editData ? editData.ControlNum : ''}
+              onChange={(e) => setEditData({ ...editData, ControlNum: e.target.value })}
+            /><br/>
+            <TextField
+              type="date"
+              name="Date"
+              placeholder="Date"
+              value={editData ? editData.Date : ''}
+              onChange={(e) => setEditData({ ...editData, Date: e.target.value })}
+            /><br/>
+            <TextField
+              type="text"
+              name="FullName"
+              placeholder="Full Name"
+              value={editData ? editData.FullName: ''}
+              onChange={(e) => setEditData({ ...editData, FullName: e.target.value })}
+            /><br/>
+            <TextField
+              type="text"
+              name="LocationRoom"
+              placeholder="Location/Room"
+              value={editData ? editData.LocationRoom : ''}
+              onChange={(e) => setEditData({ ...editData, LocationRoom: e.target.value })}
+              /><br/>
+              <TextField
+              type="text"
+              name="Requisitioner"
+              placeholder="Requisitioner"
+              value={editData ? editData.Requisitioner : ''}
+              onChange={(e) => setEditData({ ...editData, Requisitioner: e.target.value })}
+              /><br/>
+              <TextField
+              type="text"
+              name="Services"
+              placeholder="Services"
+              value={editData ? editData.Services : ''}
+              onChange={(e) => setEditData({ ...editData, Services: e.target.value })}
+              />
+
+            {/* Add similar fields for other data */}
+          </form>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={handleEditClose}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleEditSubmit} type="submit">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar
+        open={snackbarOpen1}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen1(false)}
+        message="The Service Request Document was edited successfully!"
+      />
+      <Snackbar
+        open={snackbarOpenDelete}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpenDelete(false)}
+        message="The Service Request Document was deleted successfully!"
+      />
     </Container>
 
     </>
