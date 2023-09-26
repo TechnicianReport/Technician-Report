@@ -3,7 +3,7 @@ import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getFirestore, collection, query, onSnapshot, addDoc, doc, getDocs} from '@firebase/firestore';
+import { getFirestore, collection, query, onSnapshot, doc, getDocs, where, updateDoc, deleteDoc, addDoc, getDoc, documentId } from '@firebase/firestore';
 import { initializeApp } from 'firebase/app';
 
 
@@ -46,8 +46,10 @@ const formsDocRef = doc(mainCollectionRef, "FORMS");
 // Add to subcollection 
 const serviceRequestCollectionRef = collection(formsDocRef, "SERVICE-REQUEST");
 
-// Query selector from my form that I made for inputs
-const form = document.querySelector('form');
+// Access ARCHIVES document under main collection
+const archivesRef = doc(mainCollectionRef, "ARCHIVES");
+
+const archivesCollectionRef = collection(archivesRef, "ARCHIVES-DOCUMENT");
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Faculty Name', alignRight: false },
@@ -57,37 +59,6 @@ const TABLE_HEAD = [
   { id: 'status', label: 'Date', alignRight: false },
   { id: '' },
 ];
-
-function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
-  }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
-  }
-  return 0;
-}
-
-function getComparator(order, orderBy) {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
-
-function applySortFilter(array, comparator, query) {
-  const stabilizedThis = array.map((el, index) => [el, index]);
-  stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-  if (query) {
-    return filter(array, (_user) => _user.name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
-  }
-  return stabilizedThis.map((el) => el[0]);
-}
-
-
 
 export default function UserPage() {
 
@@ -104,11 +75,11 @@ export default function UserPage() {
       querySnapshot.forEach((doc) => {
         // Handle each document here
         const data = doc.data();
+        data.id = doc.id; // Add the ID field
         dataFromFirestore.push(data);
       });
 
       setFetchedData(dataFromFirestore);
-
     } catch (error) {
       console.error("Error fetching data from Firestore: ", error);
     } finally {
@@ -140,23 +111,172 @@ export default function UserPage() {
     };
 
       try {
-        await addDoc(serviceRequestCollectionRef, docData);
+        const docRef = await addDoc(serviceRequestCollectionRef, docData);
+
+        const newDocumentId = docRef.id;
+
+        // Create a new data object that includes the ID
+        const newData = { ...docData, id: newDocumentId };
+    
+        // Update the state with the new data, adding it to the table
+        setFetchedData([...fetchedData, newData]);
+
         setOpen(false);
         setSnackbarOpen(true);
       } catch (error) {
         console.error(error);
         alert("Input cannot be incomplete");
       }
-  
-     
-  
   };
 
+  //  This one is for Search bar
+  const [searchQuery, setSearchQuery] = useState('');
+
+
+  const handleFilterByName = (event) => {
+    setPage(0);
+    setSearchQuery(event.target.value);
+  };
+
+  const filteredData = fetchedData.filter((item) =>
+['ControlNum', 'Date', 'FullName', 'LocationRoom', 'Requisitioner', 'Services'].some(
+  (field) =>
+    item[field].toLowerCase().includes(searchQuery.toLowerCase())
+)
+);
+// This one is for the Edit button
+const [editData, setEditData] = useState(null);
+
+
+const [editOpen, setEditOpen] = useState(false);
+
+
+const handleEditOpen = (data) => {
+  if (data && data.id) {
+    setEditData(data); 
+    setEditOpen(true);
+  }
+};
+
+const handleEditClose = () => {
+  setEditData(null); 
+  setEditOpen(false);
+};
+
+const handleEditSubmit = async () => {
+  
+  try {
+    const docRef = doc(serviceRequestCollectionRef, editData.id); // Assuming you have an 'id' field in your data
+    await updateDoc(docRef, editData);
+    handleEditClose();
+    setSnackbarOpen1(true);
+  } catch (error) {
+    console.error("Error updating data in Firestore: ", error);
+  }
+};
+
+// This one is for the Delete button
+const [documentToDelete, setDocumentToDelete] = useState(null);
+
+const handleConfirmDeleteWithoutArchive = async () => {
+  try {
+
+    if (documentToDelete) {
+      const sourceDocumentRef = doc(serviceRequestCollectionRef, documentToDelete);
+      const sourceDocumentData = (await getDoc(sourceDocumentRef)).data();
+   
+    await deleteDoc(doc(serviceRequestCollectionRef, documentToDelete));
+    
+    // Update the UI by removing the deleted row
+    setFetchedData((prevData) => prevData.filter((item) => item.id !== documentToDelete));
+    
+    setSnackbarOpenDelete(true); // Show a success message
+
+    // setDocumentToDelete(documentId);
+    // setArchiveDialogOpen(true);
+    }
+  } catch (error) {
+    console.error("Error deleting document:", error);
+  } finally {
+    // Close the confirmation dialog
+    setArchiveDialogOpen(false);
+    // Reset the documentToDelete state
+    setDocumentToDelete(null);
+  }
+};
+
+const handleDelete = (documentId) => {
+  // Show a confirmation dialog before deleting
+  setArchiveDialogOpen(true);
+  setDocumentToDelete(documentId);
+};
+
+
+
+// This one is for Archives
+  
+const [snackbarOpenArchive, setSnackbarOpenArchive] = useState(false);
+
+const handleConfirmDelete = async () => {
+  try {
+    if (documentToDelete) {
+      const sourceDocumentRef = doc(serviceRequestCollectionRef, documentToDelete);
+      const sourceDocumentData = (await getDoc(sourceDocumentRef)).data();
+
+      // Add the document to the "Archives" collection with a new unique ID
+      await addDoc(archivesCollectionRef, sourceDocumentData);
+
+      // Delete the original document
+      await deleteDoc(doc(serviceRequestCollectionRef, documentToDelete));
+
+      // Update the UI by removing the deleted row
+      setFetchedData((prevData) => prevData.filter((item) => item.id !== documentToDelete));
+
+      // Show a success message
+      setSnackbarOpenArchive(true);
+    }
+  } catch (error) {
+    console.error('Error archiving document:', error);
+  } finally {
+    // Close the confirmation dialog
+    setArchiveDialogOpen(false);
+    // Reset the documentToDelete state
+    setDocumentToDelete(null);
+  }
+};
+
+  // This one is for Archives and Delete together
+
+
+const [page, setPage] = useState(0); // Add these state variables for pagination
+const [rowsPerPage, setRowsPerPage] = useState(4);
+
+const startIndex = page * rowsPerPage;
+const endIndex = startIndex + rowsPerPage;
+const displayedData = filteredData.slice(startIndex, endIndex);
+
+
+const handlePageChange = (event, newPage) => {
+  console.log("Page changed to:", newPage); // Log the new page number
+  setPage(newPage);
+};
+
+const handleRowsPerPageChange = (event) => {
+  const newRowsPerPage = parseInt(event.target.value, 10);
+  console.log("Rows per page changed to:", newRowsPerPage); // Log the new rows per page value
+  setRowsPerPage(newRowsPerPage);
+  setPage(0); // Reset to the first page when changing rows per page
+};
+
+  const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  
+// This one is for idk lol
   const [open, setOpen] = useState(false);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  const [page, setPage] = useState(0);
+  const [snackbarOpen1, setSnackbarOpen1] = useState(false);
 
   const [order, setOrder] = useState('asc');
 
@@ -166,12 +286,6 @@ export default function UserPage() {
 
   const [filterName, setFilterName] = useState('');
 
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-
- 
-
-  // Fetch data from Firestore and update fetchedData state
-
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -180,77 +294,6 @@ export default function UserPage() {
   const handleClose = () => {
     setOpen(false);
   };
-  
-  const handleOpenMenu = (event) => {
-    setOpen(event.currentTarget);
-  };
-
-  // const handleCloseMenu = () => {
-  //   setOpen(null);
-  // };
-
-  const handleRequestSort = (event, property) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
-    setOrderBy(property);
-  };
-
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelecteds = USERLIST.map((n) => n.name);
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
-  };
-  
-
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected = [];
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
-    }
-    setSelected(newSelected);
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setPage(0);
-    setRowsPerPage(parseInt(event.target.value, 10));
-  };
-
-  const handleFilterByName = (event) => {
-    setPage(0);
-    setFilterName(event.target.value);
-  };
-
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - USERLIST.length) : 0;
-
-  const filteredUsers = applySortFilter(USERLIST, getComparator(order, orderBy), filterName);
-
-  const isNotFound = !filteredUsers.length && !!filterName;
-
- 
-
-  const navigate = useNavigate();
-
-  // const handlebtnClick = () => {
-  //   navigate('/dashboard', { replace: true });
-  // };
-
-  // Function for dialog on add user
-  
-  
 
   return (
     <>
@@ -263,16 +306,33 @@ export default function UserPage() {
         <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }}>
             Service Request Form
           </Typography>
+        </Stack>
 
-           <div> 
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+      { <div>
+
+      <TextField
+        type="text"
+        placeholder="Search..."
+        value={searchQuery}
+        onChange={handleFilterByName}
+      /> 
+
+      </div> }
+
+
+        <div style={{ marginLeft: '16px' }}>
           <Button onClick={handleClickOpen} variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
             New User
           </Button>
+        </div>   
+          
           <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Service Request Form</DialogTitle>
         <DialogContent>
            <form onSubmit={handleSubmit}>
- <TextField
+      <TextField
         type="text"
         name="ControlNum"
         placeholder="Control Number"
@@ -331,7 +391,6 @@ export default function UserPage() {
 
         </DialogActions>
       </Dialog>
-      <Backdrop open={open} />
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -340,141 +399,12 @@ export default function UserPage() {
       />
           </div> 
     
-        </Stack>
-
-        <Card>
-          <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
-
-          <Scrollbar>
-            <TableContainer sx={{ minWidth: 800 }}>
-              <Table>
-                <UserListHead
-                  order={order}
-                  orderBy={orderBy}
-                  headLabel={TABLE_HEAD}
-                  rowCount={USERLIST.length}
-                  numSelected={selected.length} 
-                  onRequestSort={handleRequestSort}
-                  onSelectAllClick={handleSelectAllClick}
-                />
-                <TableBody>
-                  {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const { id, name, role, status, company, avatarUrl, isVerified } = row;
-                    const selectedUser = selected.indexOf(name) !== -1;
-
-                    return (
-                      <TableRow hover key={id} tabIndex={-1} role="checkbox" selected={selectedUser}>
-                        <TableCell padding="checkbox">
-                          <Checkbox checked={selectedUser} onChange={(event) => handleClick(event, name)} />
-                        </TableCell>
-
-                        <TableCell component="th" scope="row" padding="none">
-                          <Stack direction="row" alignItems="center" spacing={2}>
-                            <Avatar alt={name} src={avatarUrl} />
-                            <Typography variant="subtitle2" noWrap>
-                              {name}
-                            </Typography>
-                          </Stack>
-                        </TableCell>
-
-                        <TableCell align="left">{company}</TableCell>
-
-                        <TableCell align="left">{role}</TableCell>
-
-                        <TableCell align="left">{isVerified ? 'Yes' : 'No'}</TableCell>
-
-                        <TableCell align="left">
-                          <Label color={(status === 'banned' && 'error') || 'success'}>{sentenceCase(status)}</Label>
-                        </TableCell>
-
-                        {/* <TableCell align="right">
-                          <IconButton size="large" color="inherit" onClick={handleOpenMenu}>
-                            <Iconify icon={'eva:more-vertical-fill'} />
-                          </IconButton>
-                        </TableCell> */}
-                      </TableRow>
-                    );
-                  })}
-                  {emptyRows > 0 && (
-                    <TableRow style={{ height: 53 * emptyRows }}>
-                      <TableCell colSpan={6} />
-                    </TableRow>
-                  )}
-                </TableBody>
-
-                {isNotFound && (
-                  <TableBody>
-                    <TableRow>
-                      <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
-                        <Paper
-                          sx={{
-                            textAlign: 'center',
-                          }}
-                        >
-                          <Typography variant="h6" paragraph>
-                            Not found
-                          </Typography>
-
-                          <Typography variant="body2">
-                            No results found for &nbsp;
-                            <strong>&quot;{filterName}&quot;</strong>.
-                            <br /> Try checking for typos or using complete words.
-                          </Typography>
-                        </Paper>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                )}
-              </Table>
-            </TableContainer>
-          </Scrollbar>
-
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={USERLIST.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Card>
+        </Stack>       
       </Container>
 
-      {/* <Popover
-        open={Boolean(open)}
-        anchorEl={open}
-        onClose={handleCloseMenu}
-        anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        PaperProps={{
-          sx: {
-            p: 1,
-            width: 140,
-            '& .MuiMenuItem-root': {
-              px: 1,
-              typography: 'body2',
-              borderRadius: 0.75,
-            },
-          },
-        }}
-      >
-        <MenuItem>
-          <Iconify icon={'eva:edit-fill'} sx={{ mr: 2 }} />
-          Edit
-        </MenuItem>
-
-        <MenuItem sx={{ color: 'error.main' }}>
-          <Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
-          Delete
-        </MenuItem>
-      </Popover> */}
+    
 
 <Container>
-      <Button onClick={fetchAllDocuments} variant="contained">
-        Fetch Data
-      </Button>
-
       {isLoading ? (
         <CircularProgress />
       ) : (
@@ -488,10 +418,13 @@ export default function UserPage() {
                 <TableCell>Location/Room</TableCell>
                 <TableCell>Requesitioner</TableCell>
                 <TableCell>Services</TableCell>
+                <TableCell>Edit</TableCell> 
+                <TableCell>Delete</TableCell>
               </TableRow>
             </TableHead>
+            
             <TableBody>
-              {fetchedData.map((item, index) => (
+              {displayedData.map((item, index) => (
                 <TableRow key={index}>
                   <TableCell>{item.ControlNum}</TableCell>
                   <TableCell>{item.Date}</TableCell>
@@ -499,13 +432,139 @@ export default function UserPage() {
                   <TableCell>{item.LocationRoom}</TableCell>
                   <TableCell>{item.Requisitioner}</TableCell>
                   <TableCell>{item.Services}</TableCell>
-                </TableRow>
+                  <TableCell>
+                    <IconButton onClick={() => handleEditOpen(item)}>
+                      <Iconify icon="material-symbols:edit" color="orange" /> {/* Edit button icon */}
+                    </IconButton>
+                  </TableCell>
+                  <TableCell>
+                      <IconButton onClick={() => handleDelete(item.id)}>
+                         <Iconify icon="material-symbols:delete-forever-outline-rounded" color="red" /> {/* Delete button icon */}
+                      </IconButton>
+                  </TableCell>
+              </TableRow>
+
               ))}
             </TableBody>
           </Table>
         </TableContainer>
       )}
+      <Dialog open={archiveDialogOpen} onClose={() => setArchiveDialogOpen(false)}>
+        <DialogTitle>Delete Document</DialogTitle>
+        <DialogContent>
+          Do you want to delete or archive this document?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setArchiveDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleConfirmDeleteWithoutArchive} color="error">Delete</Button>
+          <Button onClick={handleConfirmDelete} style={{ color: 'orange' }}>Archive</Button>
+        </DialogActions>
+      </Dialog>
+       <TablePagination
+        rowsPerPageOptions={[4, 10, 25]}
+        component="div"
+        count={filteredData.length} // Make sure this reflects the total number of rows
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
+
+      {/* This is the dialog for the Edit button */}
+      <Dialog open={editOpen} onClose={handleEditClose}>
+        <DialogTitle>Edit Service Request</DialogTitle>
+        <DialogContent>
+          <form onSubmit={handleEditSubmit}>
+            {/* Fields to edit */}
+            <TextField
+              type="text"
+              name="ControlNum"
+              placeholder="Control Number"
+              value={editData ? editData.ControlNum : ''}
+              onChange={(e) => setEditData({ ...editData, ControlNum: e.target.value })}
+            /><br/>
+            <TextField
+              type="date"
+              name="Date"
+              placeholder="Date"
+              value={editData ? editData.Date : ''}
+              onChange={(e) => setEditData({ ...editData, Date: e.target.value })}
+            /><br/>
+            <TextField
+              type="text"
+              name="FullName"
+              placeholder="Full Name"
+              value={editData ? editData.FullName: ''}
+              onChange={(e) => setEditData({ ...editData, FullName: e.target.value })}
+            /><br/>
+            <TextField
+              type="text"
+              name="LocationRoom"
+              placeholder="Location/Room"
+              value={editData ? editData.LocationRoom : ''}
+              onChange={(e) => setEditData({ ...editData, LocationRoom: e.target.value })}
+              /><br/>
+              <TextField
+              type="text"
+              name="Requisitioner"
+              placeholder="Requisitioner"
+              value={editData ? editData.Requisitioner : ''}
+              onChange={(e) => setEditData({ ...editData, Requisitioner: e.target.value })}
+              /><br/>
+              <TextField
+              type="text"
+              name="Services"
+              placeholder="Services"
+              value={editData ? editData.Services : ''}
+              onChange={(e) => setEditData({ ...editData, Services: e.target.value })}
+              />
+
+            {/* Add similar fields for other data */}
+          </form>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={handleEditClose}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleEditSubmit} type="submit">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar
+        open={snackbarOpen1}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen1(false)}
+        message="The Service Request Document was edited successfully!"
+      />
+      <Snackbar
+        open={snackbarOpenDelete}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpenDelete(false)}
+        message="The Service Request Document was deleted successfully!"
+      />
+
+      <Snackbar
+        open={snackbarOpenArchive}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpenArchive(false)}
+        message="The Service Request Document was archived successfully!"
+      />
+
+      <Button
+      onClick={fetchAllDocuments}
+      variant="contained"
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        backgroundColor: 'transparent', // Set the background color to transparent
+        border: 'none', // Remove the border
+        }}
+      >
+      <Iconify icon="system-uicons:refresh-alt" color="blue" width={30} height={30} />
+    </Button>
     </Container>
+
     </>
   );
 }

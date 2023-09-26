@@ -51,20 +51,34 @@ const archivesRef = doc(mainCollectionRef, "ARCHIVES");
 
 const archivesCollectionRef = collection(archivesRef, "ARCHIVES-DOCUMENT");
 
-const TABLE_HEAD = [
-  { id: 'name', label: 'Faculty Name', alignRight: false },
-  { id: 'company', label: 'Location/Room', alignRight: false },
-  { id: 'role', label: 'Control No.', alignRight: false },
-  { id: 'isVerified', label: 'Approved', alignRight: false },
-  { id: 'status', label: 'Date', alignRight: false },
-  { id: '' },
-];
+// const TABLE_HEAD = [
+//   { id: 'name', label: 'Faculty Name', alignRight: false },
+//   { id: 'company', label: 'Location/Room', alignRight: false },
+//   { id: 'role', label: 'Control No.', alignRight: false },
+//   { id: 'isVerified', label: 'Approved', alignRight: false },
+//   { id: 'status', label: 'Date', alignRight: false },
+//   { id: '' },
+// ];
 
 export default function UserPage() {
 
   const [fetchedData, setFetchedData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
+//  Clear Form
+  const initialFormData = {
+    ControlNum: '',
+    Date: '',
+    FullName: '',
+    LocationRoom: '',
+    Requisitioner: '',
+    Services: '',
+  };
+
+  const clearForm = () => {
+    setFormData(initialFormData);
+  };
+// Show Query 
   const fetchAllDocuments = async () => {
     setIsLoading(true);
 
@@ -101,14 +115,7 @@ export default function UserPage() {
 
     const { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services } = formData;
 
-    const docData = {
-      ControlNum,
-      Date,
-      FullName,
-      LocationRoom,
-      Requisitioner,
-      Services,
-    };
+    const docData = {ControlNum,Date,FullName,LocationRoom,Requisitioner,Services,};
 
       try {
         const docRef = await addDoc(serviceRequestCollectionRef, docData);
@@ -317,6 +324,7 @@ const handleRowsPerPageChange = (event) => {
         placeholder="Search..."
         value={searchQuery}
         onChange={handleFilterByName}
+        sx={{ width: '%' }}
       /> 
 
       </div> }
@@ -333,25 +341,28 @@ const handleRowsPerPageChange = (event) => {
         <DialogContent>
            <form onSubmit={handleSubmit}>
       <TextField
-        type="text"
-        name="ControlNum"
-        placeholder="Control Number"
-        value={formData.ControlNum}
-        onChange={(e) => setFormData({ ...formData, ControlNum: e.target.value })}
-      /><br/>
-      <TextField
         type="date"
         name="Date"
         placeholder="Date"
         value={formData.Date}
         onChange={(e) => setFormData({ ...formData, Date: e.target.value })}
+        sx={{ width: '70%' }}
+      />
+      <TextField
+        type="text"
+        name="ControlNum"
+        placeholder="Control Number"
+        value={formData.ControlNum}
+        onChange={(e) => setFormData({ ...formData, ControlNum: e.target.value })}
+        sx={{ width: '70%' }}
       /><br/>
       <TextField
         type="text"
         name="FullName"
-        placeholder="Full Name"
+        placeholder="Faculty Name"
         value={formData.FullName}
         onChange={(e) => setFormData({ ...formData, FullName: e.target.value })}
+        sx={{ width: '70%' }}
       /><br/>
       <TextField
         type="text"
@@ -359,26 +370,29 @@ const handleRowsPerPageChange = (event) => {
         placeholder="Location/Room"
         value={formData.LocationRoom}
         onChange={(e) => setFormData({ ...formData, LocationRoom: e.target.value })}
+        sx={{ width: '70%' }}
         /><br/>
-        <TextField
-        type="text"
-        name="Requisitioner"
-        placeholder="Requisitioner"
-        value={formData.Requisitioner}
-        onChange={(e) => setFormData({ ...formData, Requisitioner: e.target.value })}
-        /><br/>
-        <TextField
+      <TextField
         type="text"
         name="Services"
         placeholder="Services"
         value={formData.Services}
         onChange={(e) => setFormData({ ...formData, Services: e.target.value })}
+        sx={{ width: '70%' }}
+        /><br/>
+      <TextField
+        type="text"
+        name="Requisitioner"
+        placeholder="Requisitioner"
+        value={formData.Requisitioner}
+        onChange={(e) => setFormData({ ...formData, Requisitioner: e.target.value })}
+        sx={{ width: '70%' }}
         />
 
         </form>
         </DialogContent>
         <DialogActions>
-        <Button variant="contained" onClick={handleSubmit} type="submit" >
+        <Button variant="contained" onClick={clearForm} >
             Clear
           </Button>
           <Button variant="contained" onClick={handleClose}>
@@ -544,7 +558,7 @@ const handleRowsPerPageChange = (event) => {
         message="The Service Request Document was deleted successfully!"
       />
 
-<Snackbar
+      <Snackbar
         open={snackbarOpenArchive}
         autoHideDuration={6000}
         onClose={() => setSnackbarOpenArchive(false)}
