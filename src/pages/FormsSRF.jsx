@@ -4,6 +4,7 @@ import { sentenceCase } from 'change-case';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getFirestore, collection, query, onSnapshot, doc, getDocs, where, updateDoc, deleteDoc, addDoc, getDoc, documentId } from '@firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
 
 
@@ -14,6 +15,8 @@ import {Card,Table,Stack,Paper,Avatar,Popover,Checkbox,TableRow,
         Backdrop, Snackbar, TableHead, CircularProgress, TextField} from '@mui/material';
 
 // components
+import DeleteIcon from '@mui/icons-material/Delete';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
@@ -50,15 +53,6 @@ const serviceRequestCollectionRef = collection(formsDocRef, "SERVICE-REQUEST");
 const archivesRef = doc(mainCollectionRef, "ARCHIVES");
 
 const archivesCollectionRef = collection(archivesRef, "ARCHIVES-DOCUMENT");
-
-// const TABLE_HEAD = [
-//   { id: 'name', label: 'Faculty Name', alignRight: false },
-//   { id: 'company', label: 'Location/Room', alignRight: false },
-//   { id: 'role', label: 'Control No.', alignRight: false },
-//   { id: 'isVerified', label: 'Approved', alignRight: false },
-//   { id: 'status', label: 'Date', alignRight: false },
-//   { id: '' },
-// ];
 
 export default function UserPage() {
 
@@ -113,9 +107,9 @@ export default function UserPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services } = formData;
+    const { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services, fileURL } = formData;
 
-    const docData = {ControlNum,Date,FullName,LocationRoom,Requisitioner,Services,};
+    const docData = {ControlNum,Date,FullName,LocationRoom,Requisitioner,Services, fileURL,};
 
       try {
         const docRef = await addDoc(serviceRequestCollectionRef, docData);
@@ -162,6 +156,7 @@ const handleEditOpen = (data) => {
   if (data && data.id) {
     setEditData(data); 
     setEditOpen(true);
+    handleMenuClose();
   }
 };
 
@@ -216,6 +211,7 @@ const handleDelete = (documentId) => {
   // Show a confirmation dialog before deleting
   setArchiveDialogOpen(true);
   setDocumentToDelete(documentId);
+  handleMenuClose();
 };
 
 
@@ -252,7 +248,53 @@ const handleConfirmDelete = async () => {
   }
 };
 
-  // This one is for Archives and Delete together
+  // This one is for Uploading files 
+
+  const storage = getStorage(firebaseApp);
+
+  const handleFileUpload = async (file) => {
+    try {
+      const storageRef = ref(storage, `pdfs/${file.name}`);
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+
+      // Now you have the downloadURL, you can store it in Firestore
+      // You can add it to the `docData` object or create a separate field for it
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        pdfURL: downloadURL,
+      }));
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+};
+      
+    const handleUploadSubmit = async (e) => {
+      e.preventDefault();
+
+      const { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services, fileURL } = formData;
+
+      const docData = { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services, fileURL };
+
+      try {
+        const docRef = await addDoc(serviceRequestCollectionRef, docData);
+
+        const newDocumentId = docRef.id;
+
+        // Create a new data object that includes the ID
+        const newData = { ...docData, id: newDocumentId };
+
+        // Update the state with the new data, adding it to the table
+        setFetchedData([...fetchedData, newData]);
+        setOpen(false);
+        setSnackbarOpen(true);
+      } catch (error) {
+        console.error(error);
+        alert("Input cannot be incomplete");
+      }
+    };
+
+  // This one is for Pagination
 
 
 const [page, setPage] = useState(0); // Add these state variables for pagination
@@ -277,7 +319,98 @@ const handleRowsPerPageChange = (event) => {
 
   const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
-  
+// This one is for menu button
+const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+const [selectedItem, setSelectedItem] = useState(null);
+
+const handleMenuOpen = (event, item) => {
+  setMenuAnchorEl(event.currentTarget);
+  setSelectedItem(item);
+};
+
+const handleMenuClose = () => {
+  setMenuAnchorEl(null);
+  setSelectedItem(null);
+};
+
+// This one is for checkboxes
+const [selectAll, setSelectAll] = useState(false);
+const [selectedItems, setSelectedItems] = useState([]);
+const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
+
+const handleSelection = (documentId) => {
+  setSelectedItems((prevSelectedItems) => {
+    if (prevSelectedItems.includes(documentId)) {
+      return prevSelectedItems.filter((id) => id !== documentId);
+    }
+    return [...prevSelectedItems, documentId];
+  });
+};
+
+const handleSelectAll = () => {
+  if (bulkDeleteMode) {
+    // If bulk delete mode is already active, clear the selected items
+    setSelectedItems([]);
+  } else {
+    // If bulk delete mode is not active, select all items
+    const allDocumentIds = fetchedData.map((item) => item.id);
+    setSelectedItems(allDocumentIds);
+  }
+  setBulkDeleteMode(!bulkDeleteMode);
+  setSelectAll(!selectAll); // Toggle the selectAll state
+};
+
+
+
+// Checkbox bulk deletion
+
+const handleTrashIconClick = () => {
+  // Check if any items are selected
+  if (selectedItems.length === 0) {
+    // If no items are selected, show an error message or handle it as you prefer
+    console.error("No items selected for deletion.");
+    return;
+  }
+
+  // Open a confirmation dialog before deleting
+  // You can use a state variable to manage the dialog's open state
+  setDeleteConfirmationDialogOpen(true);
+};
+
+// Add a state variable for managing the confirmation dialog
+// Function to handle the confirmation and actually delete the items
+const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = useState(false);
+
+// Function to handle the confirmation and actually delete the items
+const handleConfirmDeleteAll = async () => {
+  try {
+    // Create an array of promises to delete each selected item
+    const deletePromises = selectedItems.map(async (itemId) => {
+      return deleteDoc(doc(serviceRequestCollectionRef, itemId));
+    });
+
+    // Use Promise.all to await all the delete operations
+    await Promise.all(deletePromises);
+
+    // Update the UI by removing the deleted rows
+    setFetchedData((prevData) => {
+      return prevData.filter((item) => !selectedItems.includes(item.id));
+    });
+
+    // Clear the selected items
+    setSelectedItems([]);
+    setBulkDeleteMode(false);
+
+    // Close the confirmation dialog
+    setDeleteConfirmationDialogOpen(false);
+
+    // Show a success message
+    setSnackbarOpenDelete(true);
+  } catch (error) {
+    console.error("Error deleting documents:", error);
+  }
+};
+
 // This one is for idk lol
   const [open, setOpen] = useState(false);
 
@@ -309,33 +442,66 @@ const handleRowsPerPageChange = (event) => {
       </Helmet>
 
       <Container>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-        <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }}>
-            Service Request Form
-          </Typography>
-        </Stack>
 
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-      { <div>
+      <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }}>
+        Service Request Form
+      </Typography>
+    </Stack>
 
-      <TextField
-        type="text"
-        placeholder="Search..."
-        value={searchQuery}
-        onChange={handleFilterByName}
-        sx={{ width: '%' }}
-      /> 
+    <Stack
+      direction="row"
+      alignItems="center"
+      justifyContent="space-between"
+      mb={5}
+      sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div>
+          <TextField
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={handleFilterByName}
+            sx={{ width: '%' }}
+          />
+        </div>
 
-      </div> }
+        <div>
+          <Button
+            onClick={fetchAllDocuments}
+            variant="contained"
+            style={{
+              margin: '0 8px', // Add margin for spacing
+              display: 'flex',
+              justifyContent: 'center',
+              backgroundColor: 'transparent', // Set the background color to transparent
+              boxShadow: 'none', // Remove the box shadow
+            }}
+          >
+            <Iconify icon="zondicons:refresh" color="#2065D1" width={55} height={55} />
+          </Button>
+        </div>
+      </div>
 
+      <div style={{ marginLeft: '16px', display: 'flex', alignItems: 'center' }}>
+        {selectedItems.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton onClick={handleTrashIconClick} >
+              <Iconify icon="material-symbols:delete-forever-outline-rounded" color="red" width={42} height={42} />
+            </IconButton>
+            <Typography variant="subtitle1" style={{ paddingRight: '16px' }}>
+              {selectedItems.length} items selected
+            </Typography>
+          </div>
+        )}
 
-        <div style={{ marginLeft: '16px' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
           <Button onClick={handleClickOpen} variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
             New User
           </Button>
-        </div>   
-          
+        </div>
+        
           <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Service Request Form</DialogTitle>
         <DialogContent>
@@ -392,6 +558,11 @@ const handleRowsPerPageChange = (event) => {
         </form>
         </DialogContent>
         <DialogActions>
+        <input
+          type="file"
+          accept=".pdf"
+          onChange={(e) => handleFileUpload(e.target.files[0])}
+        />
         <Button variant="contained" onClick={clearForm} >
             Clear
           </Button>
@@ -426,20 +597,33 @@ const handleRowsPerPageChange = (event) => {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell>
+                <Checkbox
+                  checked={selectAll}
+                  onChange={handleSelectAll}
+                  color="primary"
+                />
+                </TableCell>
                 <TableCell>Control Number</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell>Full Name</TableCell>
                 <TableCell>Location/Room</TableCell>
                 <TableCell>Requesitioner</TableCell>
                 <TableCell>Services</TableCell>
-                <TableCell>Edit</TableCell> 
-                <TableCell>Delete</TableCell>
+                <TableCell>File</TableCell>
+                <TableCell>Menu</TableCell>
               </TableRow>
             </TableHead>
             
             <TableBody>
               {displayedData.map((item, index) => (
                 <TableRow key={index}>
+                  <TableCell> 
+                      <Checkbox
+                        checked={selectedItems.includes(item.id)}
+                        onChange={() => handleSelection(item.id)}
+                      />
+                  </TableCell>
                   <TableCell>{item.ControlNum}</TableCell>
                   <TableCell>{item.Date}</TableCell>
                   <TableCell>{item.FullName}</TableCell>
@@ -447,14 +631,15 @@ const handleRowsPerPageChange = (event) => {
                   <TableCell>{item.Requisitioner}</TableCell>
                   <TableCell>{item.Services}</TableCell>
                   <TableCell>
-                    <IconButton onClick={() => handleEditOpen(item)}>
-                      <Iconify icon="material-symbols:edit" color="orange" /> {/* Edit button icon */}
-                    </IconButton>
+                    {item.fileURL}
                   </TableCell>
                   <TableCell>
-                      <IconButton onClick={() => handleDelete(item.id)}>
-                         <Iconify icon="material-symbols:delete-forever-outline-rounded" color="red" /> {/* Delete button icon */}
-                      </IconButton>
+                    <IconButton
+                      aria-label="menu"
+                      onClick={(event) => handleMenuOpen(event, item)}
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
                   </TableCell>
               </TableRow>
 
@@ -464,7 +649,7 @@ const handleRowsPerPageChange = (event) => {
         </TableContainer>
       )}
       <Dialog open={archiveDialogOpen} onClose={() => setArchiveDialogOpen(false)}>
-        <DialogTitle>Delete Document</DialogTitle>
+        <DialogTitle>Remove Document</DialogTitle>
         <DialogContent>
           Do you want to delete or archive this document?
         </DialogContent>
@@ -564,23 +749,40 @@ const handleRowsPerPageChange = (event) => {
         onClose={() => setSnackbarOpenArchive(false)}
         message="The Service Request Document was archived successfully!"
       />
+    <Popover
+      open={Boolean(menuAnchorEl)}
+      anchorEl={menuAnchorEl}
+      onClose={handleMenuClose}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'right',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+    >
+      <MenuItem onClick={() => handleEditOpen(selectedItem)}>Edit</MenuItem>
+      <MenuItem onClick={() => handleDelete(selectedItem.id)}>Remove</MenuItem>
+    </Popover>
 
-      <Button
-      onClick={fetchAllDocuments}
-      variant="contained"
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        backgroundColor: 'transparent', // Set the background color to transparent
-        border: 'none', // Remove the border
-        }}
-      >
-      <Iconify icon="system-uicons:refresh-alt" color="blue" width={30} height={30} />
-    </Button>
-    </Container>
+    <Dialog
+      open={deleteConfirmationDialogOpen}
+      onClose={() => setDeleteConfirmationDialogOpen(false)}
+    >
+      <DialogTitle>Confirm Delete</DialogTitle>
+      <DialogContent>
+        Are you sure you want to delete {selectedItems.length} items?
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setDeleteConfirmationDialogOpen(false)}>Cancel</Button>
+        <Button onClick={handleConfirmDeleteAll} color="error">Delete</Button>
+      </DialogActions>
+    </Dialog>
+
+        </Container>
 
     </>
-  );
-}
+  );}
 
 
