@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { getFirestore, collection, query, onSnapshot, doc, getDocs, where, updateDoc, deleteDoc, addDoc, getDoc, documentId } from '@firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
@@ -67,6 +67,7 @@ export default function UserPage() {
     LocationRoom: '',
     Requisitioner: '',
     Services: '',
+    fileURL: '',
   };
 
   const clearForm = () => {
@@ -104,12 +105,15 @@ export default function UserPage() {
    
   });
 
+  // for Adding new documents
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services, fileURL } = formData;
 
-    const docData = {ControlNum,Date,FullName,LocationRoom,Requisitioner,Services, fileURL,};
+    const docData = {ControlNum,Date,FullName,LocationRoom,Requisitioner,Services,   
+      fileURL: fileURL || '',};
 
       try {
         const docRef = await addDoc(serviceRequestCollectionRef, docData);
@@ -253,46 +257,71 @@ const handleConfirmDelete = async () => {
   const storage = getStorage(firebaseApp);
 
   const handleFileUpload = async (file) => {
-    try {
-      const storageRef = ref(storage, `pdfs/${file.name}`);
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
+  try {
+    const allowedFileTypes = [
+      'application/pdf', // PDF
+      'image/png',       // PNG images
+      'image/jpeg',      // JPEG images
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // Excel (XLSX)
+      'application/msword', // MS Word (DOC)
+      'application/vnd.ms-excel', // MS Excel (XLS)
+      'text/plain',      // Plain text
+      // Add more MIME types for other file formats as needed
+    ];
 
-      // Now you have the downloadURL, you can store it in Firestore
-      // You can add it to the `docData` object or create a separate field for it
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        pdfURL: downloadURL,
-      }));
-    } catch (error) {
-      console.error('Error uploading file:', error);
+    if (!allowedFileTypes.includes(file.type)) {
+      console.error('Unsupported file type. Please upload a valid document.');
+      return;
     }
+
+    const storageRef = ref(storage, `documents/${file.name}`);
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+
+    // Now you have the downloadURL, you can store it in Firestore or your form data
+    // You can add it to the `formData` object or create a separate field for it
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      fileURL: downloadURL, // Change this field name to match your data structure
+    }));
+  } catch (error) {
+    console.error('Error uploading file:', error);
+  }
 };
       
-    const handleUploadSubmit = async (e) => {
-      e.preventDefault();
+      const handleUploadSubmit = async (e) => {
+    e.preventDefault();
 
-      const { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services, fileURL } = formData;
+    const { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services, fileURL } = formData;
 
-      const docData = { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services, fileURL };
-
-      try {
-        const docRef = await addDoc(serviceRequestCollectionRef, docData);
-
-        const newDocumentId = docRef.id;
-
-        // Create a new data object that includes the ID
-        const newData = { ...docData, id: newDocumentId };
-
-        // Update the state with the new data, adding it to the table
-        setFetchedData([...fetchedData, newData]);
-        setOpen(false);
-        setSnackbarOpen(true);
-      } catch (error) {
-        console.error(error);
-        alert("Input cannot be incomplete");
-      }
+    // Ensure that the fileURL is set to a default value or handle it appropriately
+    const docData = {
+      ControlNum,
+      Date,
+      FullName,
+      LocationRoom,
+      Requisitioner,
+      Services,
+      fileURL: fileURL || '', // Set a default value or handle it based on your use case
     };
+
+    try {
+      const docRef = await addDoc(serviceRequestCollectionRef, docData);
+
+      const newDocumentId = docRef.id;
+
+      // Create a new data object that includes the ID
+      const newData = { ...docData, id: newDocumentId };
+
+      // Update the state with the new data, adding it to the table
+      setFetchedData([...fetchedData, newData]);
+      setOpen(false);
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error(error);
+      alert("Input cannot be incomplete");
+    }
+  };
 
   // This one is for Pagination
 
@@ -631,7 +660,15 @@ const handleConfirmDeleteAll = async () => {
                   <TableCell>{item.Requisitioner}</TableCell>
                   <TableCell>{item.Services}</TableCell>
                   <TableCell>
-                    {item.fileURL}
+                    {item.fileURL ? (
+                      // Render a clickable link to download the file
+                      <Link to={item.fileURL} target="_blank" download>
+                        Download 
+                      </Link>
+                    ) : (
+                      // Display "No File" if there's no file URL
+                      "No File"
+                    )}
                   </TableCell>
                   <TableCell>
                     <IconButton

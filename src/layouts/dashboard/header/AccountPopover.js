@@ -4,9 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { alpha } from '@mui/material/styles';
 import { Box, Divider, Typography, Stack, MenuItem, Avatar, IconButton, Popover } from '@mui/material';
 // mocks_
+import { getAuth, signOut }  from 'firebase/auth' 
 import account from '../../../_mock/account';
 import Login from '../../../pages/LoginPage';
 
+import { useAuthState } from '../../../firebase'
 // ----------------------------------------------------------------------
 
 const MENU_OPTIONS = [
@@ -24,10 +26,13 @@ const MENU_OPTIONS = [
   },
 ];
 
+
 // ----------------------------------------------------------------------
 
 export default function AccountPopover() {
   const [open, setOpen] = useState(null);
+
+  const { user } = useAuthState()
 
   const handleOpen = (event) => {
     setOpen(event.currentTarget);
@@ -40,7 +45,15 @@ export default function AccountPopover() {
   const navigate = useNavigate();
 
   const handlebtnClick = () => {
-    navigate('/Login', { replace: true });
+    const auth = getAuth();
+    signOut(auth)
+      .then(() => {
+        // After signing out successfully, navigate to the login page
+        navigate('/login'); // Use the navigate function directly
+      })
+      .catch((error) => {
+        console.error('Sign out error:', error);
+      });
   };
 
   return (

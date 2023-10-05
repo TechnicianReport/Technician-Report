@@ -1,4 +1,8 @@
-import { Navigate, useRoutes } from 'react-router-dom';
+import { Navigate, useRoutes, Route } from 'react-router-dom';
+import { initializeApp } from 'firebase/app'; 
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth"; // Import Firebase auth functions
+import React, { useEffect, useState} from 'react';
+import PrivateRoute from './PrivateRoute'; // Adjust the path as needed
 // layouts
 import DashboardLayout from './layouts/dashboard';
 import SimpleLayout from './layouts/simple';
@@ -32,8 +36,59 @@ import UserPage from './pages/UserPage';
 
 // ----------------------------------------------------------------------
 
+const firebaseConfig = {
+  apiKey: "AIzaSyDHFEWRU949STT98iEDSYe9Rc-WxcL3fcc",
+  authDomain: "wp4-technician-dms.firebaseapp.com",
+  projectId: "wp4-technician-dms",
+  storageBucket: "wp4-technician-dms.appspot.com",
+  messagingSenderId: "1065436189229",
+  appId: "1:1065436189229:web:88094d3d71b15a0ab29ea4"
+};
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+
+export function useAuth() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+
+    // Cleanup the subscription
+    return () => unsubscribe();
+  }, []);
+
+  return {
+    user,
+    isAuthenticated: user !== null,
+    login: async (email, password) => {
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        console.error('Login error:', error);
+      }
+    },
+    logout: async () => {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    },
+  };
+}
+
+// ----------------------------------------------------------------------
 export default function Router() {
   const routes = useRoutes([
+    // {
+    //   path: 'login',
+    //   element: <LoginPage />,
+    // },
     {
       path: '/dashboard',
       element: <DashboardLayout />,
@@ -64,10 +119,7 @@ export default function Router() {
         { path: 'user', element: <UserPage/> },
       ]
     },
-    {
-      path: 'login',
-      element: <LoginPage />,
-    },
+  
     {
       element: <SimpleLayout />,
       children: [
@@ -76,10 +128,10 @@ export default function Router() {
         { path: '*', element: <Navigate to="/404" /> },
       ],
     },
-    {
-      path: '*',
-      element: <Navigate to="/404" replace />,
-    },
+    // {
+    //   path: '*',
+    //   element: <Navigate to="/404" replace />,
+    // },
 
     
 

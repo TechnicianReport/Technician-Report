@@ -1,70 +1,92 @@
-// Import your page components here
-
-import React from 'react';
 import { Navigate, useRoutes } from 'react-router-dom';
-
-// Your page components should be imported here
+import PrivateRoute from './PrivateRoute'; // Adjust the path as needed
+// layouts
 import DashboardLayout from './layouts/dashboard';
 import SimpleLayout from './layouts/simple';
-import { useAuth } from './sections/auth/login/AuthContent';
-import PrivateRoute from './PrivateRoute';
+//
 import BlogPage from './pages/BlogPage';
+
 import LoginPage from './pages/LoginPage';
 import Page404 from './pages/Page404';
 import ProductsPage from './pages/ProductsPage';
 import DashboardAppPage from './pages/DashboardAppPage';
+//  Forms Section
 import Forms from './pages/Form';
-import FormsSRF from './pages/FormsSRF';
-import FormsBIF from './pages/FormsBIF';
-import FormsRIF from './pages/FormsRIF';
-import FormsIRF from './pages/FormsIRF';
+    import FormsSRF from './pages/FormsSRF';
+    import FormsBIF from './pages/FormsBIF';
+    import FormsRIF from './pages/FormsRIF';
+    import FormsIRF from './pages/FormsIRF';
+//  Profiling Section
 import Profiling from './pages/Profiling';
-import ProfilingMR from './pages/ProfilingMR';
-import ProfilingCI from './pages/ProfilingCI';
+    import ProfilingMR from './pages/ProfilingMR';
+    import ProfilingCI from './pages/ProfilingCI';
+//  Reports Section
 import Reports from './pages/Report';
-import ReportsPTR from './pages/ReportsPTR';
-import ReportsITR from './pages/ReportsITR';
-import ReportsMAR from './pages/ReportsMAR';
-import ReportsILF from './pages/ReportsILF';
+    import ReportsPTR from './pages/ReportsPTR';
+    import ReportsITR from './pages/ReportsITR';
+    import ReportsMAR from './pages/ReportsMAR';
+    import ReportsILF from './pages/ReportsILF';
+//  Archives Section
 import Archives from './pages/Archive';
+//  Users Section
 import UserPage from './pages/UserPage';
 
+// ----------------------------------------------------------------------
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDHFEWRU949STT98iEDSYe9Rc-WxcL3fcc",
+  authDomain: "wp4-technician-dms.firebaseapp.com",
+  projectId: "wp4-technician-dms",
+  storageBucket: "wp4-technician-dms.appspot.com",
+  messagingSenderId: "1065436189229",
+  appId: "1:1065436189229:web:88094d3d71b15a0ab29ea4"
+};
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+// ----------------------------------------------------------------------
 export default function Router() {
-  const { authenticated } = useAuth();
+
+  const {isAuthenticated} = auth();
 
   const routes = useRoutes([
+
     {
-      path: '/login',
-      element: !authenticated ? <LoginPage /> : <Navigate to="/dashboard/app" />,
+      path: 'login',
+      element: <LoginPage />,
     },
-    {
-      path: '/',
-      element: !authenticated ? <LoginPage /> : <Navigate to="/dashboard/app" />,
-    },
-    {
+    
+    {  
       path: '/dashboard',
-      element: authenticated ? <DashboardLayout /> : null, // Remove the <Navigate to="/dashboard/app" /> here
+      element: <DashboardLayout />,
       children: [
         { element: <Navigate to="/dashboard/app" />, index: true },
         { path: 'app', element: <DashboardAppPage /> },
-        <PrivateRoute key="products" path="products" authenticated={authenticated} redirectTo="/login" element={<ProductsPage />} />,
-        <PrivateRoute key="blog" path="blog" authenticated={authenticated} redirectTo="/login" element={<BlogPage />} />,
-        <PrivateRoute key="forms" authenticated={authenticated} redirectTo="/login" element={<Forms />} />,
-        <PrivateRoute key="srf" path="service_request" authenticated={authenticated} redirectTo="/login" element={<FormsSRF />} />,
-        <PrivateRoute key="bif" path="borrowers_item" authenticated={authenticated} redirectTo="/login" element={<FormsBIF />} />,
-        <PrivateRoute key="rif" path="request_item" authenticated={authenticated} redirectTo="/login" element={<FormsRIF />} />,
-        <PrivateRoute key="irf" path="inspection_report" authenticated={authenticated} redirectTo="/login" element={<FormsIRF />} />,
-        <PrivateRoute key="profiling" path="profiling" authenticated={authenticated} redirectTo="/login" element={<Profiling />} />,
-        <PrivateRoute key="mr" path="profiling_mr" authenticated={authenticated} redirectTo="/login" element={<ProfilingMR />} />,
-        <PrivateRoute key="ci" path="profiling_ci" authenticated={authenticated} redirectTo="/login" element={<ProfilingCI />} />,
-        <PrivateRoute key="reports" path="reports" authenticated={authenticated} redirectTo="/login" element={<Reports />} />,
-        <PrivateRoute key="ptr" path="reports_ptr" authenticated={authenticated} redirectTo="/login" element={<ReportsPTR />} />,
-        <PrivateRoute key="itr" path="reports_itr" authenticated={authenticated} redirectTo="/login" element={<ReportsITR />} />,
-        <PrivateRoute key="mar" path="reports_mar" authenticated={authenticated} redirectTo="/login" element={<ReportsMAR />} />,
-        <PrivateRoute key="ilf" path="reports_ilf" authenticated={authenticated} redirectTo="/login" element={<ReportsILF />} />,
-        <PrivateRoute key="archives" path="archives" authenticated={authenticated} redirectTo="/login" element={<Archives />} />,
-        <PrivateRoute key="user" path="user" authenticated={authenticated} redirectTo="/login" element={<UserPage />} />,
-      ],
+        { path: 'products', element: <ProductsPage /> },
+        { path: 'blog', element: <BlogPage /> },
+        //  Forms Section
+        { path: 'form', element: <Forms/>}, 
+          { path: 'service_request', element: <FormsSRF/>}, 
+          { path: 'borrowers_item', element: <FormsBIF/>},
+          { path: 'request_item', element: <FormsRIF/>},
+          { path: 'inspection_report', element: <FormsIRF/>},
+        //  Profiling Section
+        { path: 'profiling', element: <Profiling/> },
+          { path: 'profiling_mr', element: <ProfilingMR/> },
+          { path: 'profiling_ci', element: <ProfilingCI/> },
+        //  Reports Section
+        { path: 'reports', element: <Reports/> },
+          { path: 'reports_ptr', element: <ReportsPTR/> },
+          { path: 'reports_itr', element: <ReportsITR/> },
+          { path: 'reports_mar', element: <ReportsMAR/> },
+          { path: 'reports_ilf', element: <ReportsILF/> },
+        //  Archives Section
+        { path: 'archives', element: <Archives/> },
+        //  User Section
+        { path: 'user', element: <UserPage/> },
+      ]
     },
     {
       element: <SimpleLayout />,
@@ -78,6 +100,10 @@ export default function Router() {
       path: '*',
       element: <Navigate to="/404" replace />,
     },
+
+    
+
+    
   ]);
 
   return routes;

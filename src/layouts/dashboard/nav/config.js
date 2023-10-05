@@ -1,4 +1,3 @@
-// component
 import { Icon } from '@iconify/react';
 import SvgColor from '../../../components/svg-color';
 
