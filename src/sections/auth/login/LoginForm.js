@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // @mui
-import { Link, Stack, IconButton, InputAdornment, TextField, Checkbox, appBarClasses } from '@mui/material';
+import { Link, Stack, IconButton, InputAdornment, TextField, Checkbox, appBarClasses, Typography } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 // components
 
@@ -28,10 +28,10 @@ const auth = getAuth(app);
 export default function LoginForm() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
+  const [error, setError] = useState(null); // State variable for error message
   
   
 
@@ -43,7 +43,9 @@ export default function LoginForm() {
       // If authentication is successful, redirect to the dashboard
       navigate('/dashboard', { replace: true });
     } catch (error) {
-      console.error("Error signing in: ", error.message);
+      console.error('Error signing in: ', error.message);
+      // Set the error message in case of authentication failure
+      setError('Invalid email or password. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -51,12 +53,14 @@ export default function LoginForm() {
 
   return (
     <>
+    <form onSubmit={handleLogin}>
       <Stack spacing={3}>
         <TextField
           name="email"
           label="Email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
         />
         <TextField
           name="password"
@@ -73,11 +77,11 @@ export default function LoginForm() {
               </InputAdornment>
             ),
           }}
+          autoComplete="password"
         />
       </Stack>
 
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ my: 2 }}>
-        <Checkbox name="remember" label="Remember me" />
+      <Stack direction="row" alignItems="center" justifyContent="center" sx={{ my: 2 }}>
         <Link variant="subtitle2" underline="hover">
           Forgot password?
         </Link>
@@ -94,6 +98,12 @@ export default function LoginForm() {
       >
         Login
       </LoadingButton>
+      {error && ( // Render the error message if it exists
+        <Typography variant="body2" color="error" sx={{ marginTop: 1, backgroundColor: '#f8d7da', color: '#721c24', padding: '8px', borderRadius: '4px', border: '1px solid #f5c6cb' }}>
+          {error}
+        </Typography>
+      )}
+    </form>
     </>
   );
 }

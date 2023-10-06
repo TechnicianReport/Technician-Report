@@ -1,13 +1,16 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client'; // Import createRoot
 import App from './App';
-import { AuthContextProvider } from './firebase'; // Import the AuthContextProvider
+import { AuthContextProvider } from './firebase';
 
-ReactDOM.render(
+const root = document.getElementById('root');
+
+const appRoot = createRoot(root); // Create a root
+
+appRoot.render(
   <React.StrictMode>
-    <AuthContextProvider> {/* Wrap your App component with AuthContextProvider */}
+    <AuthContextProvider>
       <App />
     </AuthContextProvider>
-  </React.StrictMode>,
-  document.getElementById('root')
+  </React.StrictMode>
 );

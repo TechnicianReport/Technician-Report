@@ -3,7 +3,7 @@ import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getFirestore, collection, query, onSnapshot, doc, getDocs, where, updateDoc, deleteDoc, addDoc, getDoc, documentId } from '@firebase/firestore';
+import { getFirestore, collection, query, onSnapshot, doc, getDocs, where, updateDoc, deleteDoc, addDoc, getDoc, documentId, setDoc } from '@firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
 
@@ -54,12 +54,29 @@ const archivesRef = doc(mainCollectionRef, "ARCHIVES");
 
 const archivesCollectionRef = collection(archivesRef, "ARCHIVES-DOCUMENT");
 
-export default function UserPage() {
 
+
+//  Clear the whole Form function
+export default function UserPage() {
   const [fetchedData, setFetchedData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-//  Clear Form
+  // Handle change function
+const [formData, setFormData] = useState({
+  ControlNum: '', // Add default values here
+  Date: '',       // Add default values here
+  FullName: '',   // Add default values here
+  LocationRoom: '', // Add default values here
+  Requisitioner: '', // Add default values here
+  Services: '',  // Add default values here
+  fileURL: '',    // Add default values here
+});
+
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  setFormData({ ...formData, [name]: value });
+};
+
   const initialFormData = {
     ControlNum: '',
     Date: '',
@@ -73,7 +90,9 @@ export default function UserPage() {
   const clearForm = () => {
     setFormData(initialFormData);
   };
-// Show Query 
+
+// Show Query or the table, fetch data from firestore
+
   const fetchAllDocuments = async () => {
     setIsLoading(true);
 
@@ -100,38 +119,66 @@ export default function UserPage() {
     fetchAllDocuments();
    }, []);
 
+  // Configuring the document ID for adding new documents
+  // const [currentDocumentName, setCurrentDocumentName] = useState("SRF-00");
 
-  const [formData, setFormData] = useState({
-   
-  });
+  const currentDocumentName = "SRF-00"; // Initialize it with your default document name
 
-  // for Adding new documents
 
+// Function to increment the document name
+
+  const incrementDocumentName = async (nextNumber = 0) => {
+    const newDocumentName = `SRF-${nextNumber.toString().padStart(2, "0")}`;
+
+    // Check if the document with the new name already exists
+    const docSnapshot = await getDoc(doc(serviceRequestCollectionRef, newDocumentName));
+
+    if (docSnapshot.exists()) {
+      // The document with the new name exists, so increment and try again
+      return incrementDocumentName(nextNumber + 1);
+    }
+
+    // The document with the new name doesn't exist, so we can use it
+    return newDocumentName; // Return the generated document name
+  };
+
+
+ // function for Adding new documents
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services, fileURL } = formData;
 
-    const docData = {ControlNum,Date,FullName,LocationRoom,Requisitioner,Services,   
-      fileURL: fileURL || '',};
+    try {
+      // Use the current document name when adding a new document
+      const documentName = await incrementDocumentName();
 
-      try {
-        const docRef = await addDoc(serviceRequestCollectionRef, docData);
+      const docRef = doc(serviceRequestCollectionRef, documentName);
 
-        const newDocumentId = docRef.id;
+      const docData = {
+        ControlNum,
+        Date,
+        FullName,
+        LocationRoom,
+        Requisitioner,
+        Services,
+        fileURL: fileURL || '',
+      };
 
-        // Create a new data object that includes the ID
-        const newData = { ...docData, id: newDocumentId };
-    
-        // Update the state with the new data, adding it to the table
-        setFetchedData([...fetchedData, newData]);
+      await setDoc(docRef, docData);
 
-        setOpen(false);
-        setSnackbarOpen(true);
-      } catch (error) {
-        console.error(error);
-        alert("Input cannot be incomplete");
-      }
+      // Create a new data object that includes the custom ID
+      const newData = { ...docData, id: documentName };
+
+      // Update the state with the new data, adding it to the table
+      setFetchedData([...fetchedData, newData]);
+
+      setOpen(false);
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error(error);
+      alert("Input cannot be incomplete");
+    }
   };
 
   //  This one is for Search bar
@@ -144,11 +191,12 @@ export default function UserPage() {
   };
 
   const filteredData = fetchedData.filter((item) =>
-['ControlNum', 'Date', 'FullName', 'LocationRoom', 'Requisitioner', 'Services'].some(
-  (field) =>
-    item[field].toLowerCase().includes(searchQuery.toLowerCase())
-)
+  ['ControlNum', 'Date', 'FullName', 'LocationRoom', 'Requisitioner', 'Services'].some(
+    (field) =>
+      (item[field] && item[field].toLowerCase().includes(searchQuery.toLowerCase()))
+  )
 );
+
 // This one is for the Edit button
 const [editData, setEditData] = useState(null);
 
@@ -535,55 +583,58 @@ const handleConfirmDeleteAll = async () => {
         <DialogTitle>Service Request Form</DialogTitle>
         <DialogContent>
            <form onSubmit={handleSubmit}>
-      <TextField
-        type="date"
-        name="Date"
-        placeholder="Date"
-        value={formData.Date}
-        onChange={(e) => setFormData({ ...formData, Date: e.target.value })}
-        sx={{ width: '70%' }}
-      />
-      <TextField
-        type="text"
-        name="ControlNum"
-        placeholder="Control Number"
-        value={formData.ControlNum}
-        onChange={(e) => setFormData({ ...formData, ControlNum: e.target.value })}
-        sx={{ width: '70%' }}
-      /><br/>
-      <TextField
-        type="text"
-        name="FullName"
-        placeholder="Faculty Name"
-        value={formData.FullName}
-        onChange={(e) => setFormData({ ...formData, FullName: e.target.value })}
-        sx={{ width: '70%' }}
-      /><br/>
-      <TextField
-        type="text"
-        name="LocationRoom"
-        placeholder="Location/Room"
-        value={formData.LocationRoom}
-        onChange={(e) => setFormData({ ...formData, LocationRoom: e.target.value })}
-        sx={{ width: '70%' }}
-        /><br/>
-      <TextField
-        type="text"
-        name="Services"
-        placeholder="Services"
-        value={formData.Services}
-        onChange={(e) => setFormData({ ...formData, Services: e.target.value })}
-        sx={{ width: '70%' }}
-        /><br/>
-      <TextField
-        type="text"
-        name="Requisitioner"
-        placeholder="Requisitioner"
-        value={formData.Requisitioner}
-        onChange={(e) => setFormData({ ...formData, Requisitioner: e.target.value })}
-        sx={{ width: '70%' }}
-        />
-
+           <TextField
+              type="date"
+              name="Date"
+              placeholder="Date"
+              value={formData.Date || ''}
+              onChange={(e) => setFormData({ ...formData, Date: e.target.value })}
+              sx={{ width: '70%' }}
+            />
+            <TextField
+              type="text"
+              name="ControlNum"
+              placeholder="Control Number"
+              value={formData.ControlNum || ''}
+              onChange={(e) => setFormData({ ...formData, ControlNum: e.target.value })}
+              sx={{ width: '70%' }}
+            />
+            <br />
+            <TextField
+              type="text"
+              name="FullName"
+              placeholder="Faculty Name"
+              value={formData.FullName || ''}
+              onChange={(e) => setFormData({ ...formData, FullName: e.target.value })}
+              sx={{ width: '70%' }}
+            />
+            <br />
+            <TextField
+              type="text"
+              name="LocationRoom"
+              placeholder="Location/Room"
+              value={formData.LocationRoom || ''}
+              onChange={(e) => setFormData({ ...formData, LocationRoom: e.target.value })}
+              sx={{ width: '70%' }}
+            />
+            <br />
+            <TextField
+              type="text"
+              name="Services"
+              placeholder="Services"
+              value={formData.Services || ''}
+              onChange={(e) => setFormData({ ...formData, Services: e.target.value })}
+              sx={{ width: '70%' }}
+            />
+            <br />
+            <TextField
+              type="text"
+              name="Requisitioner"
+              placeholder="Requisitioner"
+              value={formData.Requisitioner || ''}
+              onChange={(e) => setFormData({ ...formData, Requisitioner: e.target.value })}
+              sx={{ width: '70%' }}
+            />
         </form>
         </DialogContent>
         <DialogActions>

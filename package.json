@@ -5,7 +5,7 @@
   "version": "1.7.0",
   "private": false,
   "scripts": {
-    "start": "react-scripts start --port 3000/login",
+    "start": "react-scripts start ",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",

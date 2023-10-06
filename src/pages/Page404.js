@@ -42,8 +42,8 @@ export default function Page404() {
             sx={{ height: 260, mx: 'auto', my: { xs: 5, sm: 10 } }}
           />
 
-            <Button to="/login" size="large" variant="contained" component={RouterLink}>
-              Go back to Login
+            <Button to="/dashboard/app" size="large" variant="contained" component={RouterLink}>
+              Go back to Home page
             </Button>
         </StyledContent>
       </Container>

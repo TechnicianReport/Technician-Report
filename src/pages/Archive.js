@@ -1,29 +1,22 @@
 import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { getFirestore, collection, query, onSnapshot, doc, getDocs, where, updateDoc, deleteDoc, addDoc, getDoc, documentId } from '@firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { initializeApp } from 'firebase/app';
+
+
 // @mui
-import {
-  Card,
-  Table,
-  Stack,
-  Paper,
-  Avatar,
-  Button,
-  Popover,
-  Checkbox,
-  TableRow,
-  MenuItem,
-  TableBody,
-  TableCell,
-  Container,
-  Typography,
-  IconButton,
-  TableContainer,
-  TablePagination,
-} from '@mui/material';
+import {Card,Table,Stack,Paper,Avatar,Popover,Checkbox,TableRow,
+        MenuItem,TableBody,TableCell,Container,Typography,IconButton,TableContainer,
+        TablePagination,Dialog, DialogTitle, DialogContent, DialogActions, Button, 
+        Backdrop, Snackbar, TableHead, CircularProgress, TextField} from '@mui/material';
+
 // components
+import DeleteIcon from '@mui/icons-material/Delete';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Label from '../components/label';
 import Iconify from '../components/iconify';
 import Scrollbar from '../components/scrollbar';
@@ -32,52 +25,251 @@ import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 // mock
 import USERLIST from '../_mock/user';
 
-// ----------------------------------------------------------------------
+const firebaseConfig = {
+  apiKey: "AIzaSyDHFEWRU949STT98iEDSYe9Rc-WxcL3fcc",
+  authDomain: "wp4-technician-dms.firebaseapp.com",
+  projectId: "wp4-technician-dms",
+  storageBucket: "wp4-technician-dms.appspot.com",
+  messagingSenderId: "1065436189229",
+  appId: "1:1065436189229:web:88094d3d71b15a0ab29ea4"
+};
 
-const TABLE_HEAD = [
-  { id: 'name', label: 'Faculty Name', alignRight: false },
-  { id: 'company', label: 'Location/Room', alignRight: false },
-  { id: 'role', label: 'Control No.', alignRight: false },
-  { id: 'isVerified', label: 'Approved', alignRight: false },
-  { id: 'status', label: 'Date', alignRight: false },
-  { id: '' },
-];
+// Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig);
 
-// ----------------------------------------------------------------------
+// Initialize Firestore db
+const db = getFirestore(firebaseApp);
 
-function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
-  }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
-  }
-  return 0;
-}
+// Access main collection
+const mainCollectionRef = collection(db, "WP4-TECHNICIAN-DMS");
 
-function getComparator(order, orderBy) {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
+// Access FORMS document under main collection
+const formsDocRef = doc(mainCollectionRef, "FORMS");
 
-function applySortFilter(array, comparator, query) {
-  const stabilizedThis = array.map((el, index) => [el, index]);
-  stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-  if (query) {
-    return filter(array, (_user) => _user.name.toLowerCase().indexOf(query.toLowerCase()) !== -1);
-  }
-  return stabilizedThis.map((el) => el[0]);
-}
+// Add to subcollection 
+const serviceRequestCollectionRef = collection(formsDocRef, "SERVICE-REQUEST");
 
+// Access ARCHIVES document under main collection
+const archivesRef = doc(mainCollectionRef, "ARCHIVES");
+
+const archivesCollectionRef = collection(archivesRef, "ARCHIVES-DOCUMENT");
+
+
+//  Clear the whole Form function
 export default function UserPage() {
-  const [open, setOpen] = useState(null);
+  const [fetchedData, setFetchedData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [page, setPage] = useState(0);
+// Show Query or the table, fetch data from firestore
+
+  const fetchAllDocuments = async () => {
+    setIsLoading(true);
+
+    try {
+      const querySnapshot = await getDocs(serviceRequestCollectionRef);
+      const dataFromFirestore = [];
+
+      querySnapshot.forEach((doc) => {
+        // Handle each document here
+        const data = doc.data();
+        data.id = doc.id; // Add the ID field
+        dataFromFirestore.push(data);
+      });
+
+      setFetchedData(dataFromFirestore);
+    } catch (error) {
+      console.error("Error fetching data from Firestore: ", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllDocuments();
+   }, []);
+
+
+  const [formData, setFormData] = useState({
+   
+  });
+
+
+  //  This one is for Search bar
+  const [searchQuery, setSearchQuery] = useState('');
+
+
+  const handleFilterByName = (event) => {
+    setPage(0);
+    setSearchQuery(event.target.value);
+  };
+
+  const filteredData = fetchedData.filter((item) =>
+['ControlNum', 'Date', 'FullName', 'LocationRoom', 'Requisitioner', 'Services'].some(
+  (field) =>
+    item[field].toLowerCase().includes(searchQuery.toLowerCase())
+)
+);
+
+// This one is for the Delete button
+const [documentToDelete, setDocumentToDelete] = useState(null);
+
+const handleConfirmDeleteWithoutArchive = async () => {
+  try {
+
+    if (documentToDelete) {
+      const sourceDocumentRef = doc(serviceRequestCollectionRef, documentToDelete);
+      const sourceDocumentData = (await getDoc(sourceDocumentRef)).data();
+   
+    await deleteDoc(doc(serviceRequestCollectionRef, documentToDelete));
+    
+    // Update the UI by removing the deleted row
+    setFetchedData((prevData) => prevData.filter((item) => item.id !== documentToDelete));
+    
+    setSnackbarOpenDelete(true); // Show a success message
+
+    // setDocumentToDelete(documentId);
+    // setArchiveDialogOpen(true);
+    }
+  } catch (error) {
+    console.error("Error deleting document:", error);
+  } finally {
+    // Close the confirmation dialog
+    setArchiveDialogOpen(false);
+    // Reset the documentToDelete state
+    setDocumentToDelete(null);
+  }
+};
+
+const handleDelete = (documentId) => {
+  // Show a confirmation dialog before deleting
+  setArchiveDialogOpen(true);
+  setDocumentToDelete(documentId);
+  handleMenuClose();
+};
+
+  // This one is for Pagination
+
+
+const [page, setPage] = useState(0); // Add these state variables for pagination
+const [rowsPerPage, setRowsPerPage] = useState(4);
+
+const startIndex = page * rowsPerPage;
+const endIndex = startIndex + rowsPerPage;
+const displayedData = filteredData.slice(startIndex, endIndex);
+
+
+const handlePageChange = (event, newPage) => {
+  console.log("Page changed to:", newPage); // Log the new page number
+  setPage(newPage);
+};
+
+const handleRowsPerPageChange = (event) => {
+  const newRowsPerPage = parseInt(event.target.value, 10);
+  console.log("Rows per page changed to:", newRowsPerPage); // Log the new rows per page value
+  setRowsPerPage(newRowsPerPage);
+  setPage(0); // Reset to the first page when changing rows per page
+};
+
+  const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+// This one is for menu button
+const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+const [selectedItem, setSelectedItem] = useState(null);
+
+const handleMenuOpen = (event, item) => {
+  setMenuAnchorEl(event.currentTarget);
+  setSelectedItem(item);
+};
+
+const handleMenuClose = () => {
+  setMenuAnchorEl(null);
+  setSelectedItem(null);
+};
+
+// This one is for checkboxes
+const [selectAll, setSelectAll] = useState(false);
+const [selectedItems, setSelectedItems] = useState([]);
+const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
+
+const handleSelection = (documentId) => {
+  setSelectedItems((prevSelectedItems) => {
+    if (prevSelectedItems.includes(documentId)) {
+      return prevSelectedItems.filter((id) => id !== documentId);
+    }
+    return [...prevSelectedItems, documentId];
+  });
+};
+
+const handleSelectAll = () => {
+  if (bulkDeleteMode) {
+    // If bulk delete mode is already active, clear the selected items
+    setSelectedItems([]);
+  } else {
+    // If bulk delete mode is not active, select all items
+    const allDocumentIds = fetchedData.map((item) => item.id);
+    setSelectedItems(allDocumentIds);
+  }
+  setBulkDeleteMode(!bulkDeleteMode);
+  setSelectAll(!selectAll); // Toggle the selectAll state
+};
+
+
+
+// Checkbox bulk deletion
+
+const handleTrashIconClick = () => {
+  // Check if any items are selected
+  if (selectedItems.length === 0) {
+    // If no items are selected, show an error message or handle it as you prefer
+    console.error("No items selected for deletion.");
+    return;
+  }
+
+  // Open a confirmation dialog before deleting
+  // You can use a state variable to manage the dialog's open state
+  setDeleteConfirmationDialogOpen(true);
+};
+
+// Add a state variable for managing the confirmation dialog
+// Function to handle the confirmation and actually delete the items
+const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = useState(false);
+
+// Function to handle the confirmation and actually delete the items
+const handleConfirmDeleteAll = async () => {
+  try {
+    // Create an array of promises to delete each selected item
+    const deletePromises = selectedItems.map(async (itemId) => {
+      return deleteDoc(doc(serviceRequestCollectionRef, itemId));
+    });
+
+    // Use Promise.all to await all the delete operations
+    await Promise.all(deletePromises);
+
+    // Update the UI by removing the deleted rows
+    setFetchedData((prevData) => {
+      return prevData.filter((item) => !selectedItems.includes(item.id));
+    });
+
+    // Clear the selected items
+    setSelectedItems([]);
+    setBulkDeleteMode(false);
+
+    // Close the confirmation dialog
+    setDeleteConfirmationDialogOpen(false);
+
+    // Show a success message
+    setSnackbarOpenDelete(true);
+  } catch (error) {
+    console.error("Error deleting documents:", error);
+  }
+};
+
+// This one is for idk lol
+  const [open, setOpen] = useState(false);
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
+  const [snackbarOpen1, setSnackbarOpen1] = useState(false);
 
   const [order, setOrder] = useState('asc');
 
@@ -87,215 +279,210 @@ export default function UserPage() {
 
   const [filterName, setFilterName] = useState('');
 
-  const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const handleOpenMenu = (event) => {
-    setOpen(event.currentTarget);
+  const handleClickOpen = () => {
+    setOpen(true);
   };
 
-  const handleCloseMenu = () => {
-    setOpen(null);
-  };
-
-  const handleRequestSort = (event, property) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
-    setOrderBy(property);
-  };
-
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelecteds = USERLIST.map((n) => n.name);
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
-  };
-
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected = [];
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
-    }
-    setSelected(newSelected);
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setPage(0);
-    setRowsPerPage(parseInt(event.target.value, 10));
-  };
-
-  const handleFilterByName = (event) => {
-    setPage(0);
-    setFilterName(event.target.value);
-  };
-
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - USERLIST.length) : 0;
-
-  const filteredUsers = applySortFilter(USERLIST, getComparator(order, orderBy), filterName);
-
-  const isNotFound = !filteredUsers.length && !!filterName;
-
-  const navigate = useNavigate();
-
-  const handlebtnClick = () => {
-    navigate('/dashboard', { replace: true });
+  const handleClose = () => {
+    setOpen(false);
   };
 
   return (
     <>
       <Helmet>
-        <title> Borrowers' Items | Minimal UI </title>
+        <title> Archives Collection | Minimal UI </title>
       </Helmet>
 
       <Container>
+
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-        <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }}>
-            Archives
-          </Typography>
-          <Button onClick={handlebtnClick} variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
-            New
-          </Button>
-        </Stack>
+      <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }}>
+        Archives Collection
+      </Typography>
+    </Stack>
 
-        <Card>
-          <UserListToolbar numSelected={selected.length} filterName={filterName} onFilterName={handleFilterByName} />
-
-          <Scrollbar>
-            <TableContainer sx={{ minWidth: 800 }}>
-              <Table>
-                <UserListHead
-                  order={order}
-                  orderBy={orderBy}
-                  headLabel={TABLE_HEAD}
-                  rowCount={USERLIST.length}
-                  numSelected={selected.length}
-                  onRequestSort={handleRequestSort}
-                  onSelectAllClick={handleSelectAllClick}
-                />
-                <TableBody>
-                  {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const { id, name, role, status, company, avatarUrl, isVerified } = row;
-                    const selectedUser = selected.indexOf(name) !== -1;
-
-                    return (
-                      <TableRow hover key={id} tabIndex={-1} role="checkbox" selected={selectedUser}>
-                        <TableCell padding="checkbox">
-                          <Checkbox checked={selectedUser} onChange={(event) => handleClick(event, name)} />
-                        </TableCell>
-
-                        <TableCell component="th" scope="row" padding="none">
-                          <Stack direction="row" alignItems="center" spacing={2}>
-                            <Avatar alt={name} src={avatarUrl} />
-                            <Typography variant="subtitle2" noWrap>
-                              {name}
-                            </Typography>
-                          </Stack>
-                        </TableCell>
-
-                        <TableCell align="left">{company}</TableCell>
-
-                        <TableCell align="left">{role}</TableCell>
-
-                        <TableCell align="left">{isVerified ? 'Yes' : 'No'}</TableCell>
-
-                        <TableCell align="left">
-                          <Label color={(status === 'banned' && 'error') || 'success'}>{sentenceCase(status)}</Label>
-                        </TableCell>
-
-                        <TableCell align="right">
-                          <IconButton size="large" color="inherit" onClick={handleOpenMenu}>
-                            <Iconify icon={'eva:more-vertical-fill'} />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                  {emptyRows > 0 && (
-                    <TableRow style={{ height: 53 * emptyRows }}>
-                      <TableCell colSpan={6} />
-                    </TableRow>
-                  )}
-                </TableBody>
-
-                {isNotFound && (
-                  <TableBody>
-                    <TableRow>
-                      <TableCell align="center" colSpan={6} sx={{ py: 3 }}>
-                        <Paper
-                          sx={{
-                            textAlign: 'center',
-                          }}
-                        >
-                          <Typography variant="h6" paragraph>
-                            Not found
-                          </Typography>
-
-                          <Typography variant="body2">
-                            No results found for &nbsp;
-                            <strong>&quot;{filterName}&quot;</strong>.
-                            <br /> Try checking for typos or using complete words.
-                          </Typography>
-                        </Paper>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                )}
-              </Table>
-            </TableContainer>
-          </Scrollbar>
-
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={USERLIST.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
+    <Stack
+      direction="row"
+      alignItems="center"
+      justifyContent="space-between"
+      mb={5}
+      sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div>
+          <TextField
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={handleFilterByName}
+            sx={{ width: '%' }}
           />
-        </Card>
+        </div>
+
+        <div>
+          <Button
+            onClick={fetchAllDocuments}
+            variant="contained"
+            style={{
+              margin: '0 8px', // Add margin for spacing
+              display: 'flex',
+              justifyContent: 'center',
+              backgroundColor: 'transparent', // Set the background color to transparent
+              boxShadow: 'none', // Remove the box shadow
+            }}
+          >
+            <Iconify icon="zondicons:refresh" color="#2065D1" width={55} height={55} />
+          </Button>
+        </div>
+      </div>
+
+      <div style={{ marginLeft: '16px', display: 'flex', alignItems: 'center' }}>
+        {selectedItems.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton onClick={handleTrashIconClick} >
+              <Iconify icon="material-symbols:delete-forever-outline-rounded" color="red" width={42} height={42} />
+            </IconButton>
+            <Typography variant="subtitle1" style={{ paddingRight: '16px' }}>
+              {selectedItems.length} items selected
+            </Typography>
+          </div>
+        )}
+          </div> 
+    
+        </Stack>       
       </Container>
 
-      <Popover
-        open={Boolean(open)}
-        anchorEl={open}
-        onClose={handleCloseMenu}
-        anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        PaperProps={{
-          sx: {
-            p: 1,
-            width: 140,
-            '& .MuiMenuItem-root': {
-              px: 1,
-              typography: 'body2',
-              borderRadius: 0.75,
-            },
-          },
-        }}
-      >
-        <MenuItem>
-          <Iconify icon={'eva:edit-fill'} sx={{ mr: 2 }} />
-          Edit
-        </MenuItem>
+    
 
-        <MenuItem sx={{ color: 'error.main' }}>
-          <Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
-          Delete
-        </MenuItem>
-      </Popover>
+<Container>
+      {isLoading ? (
+        <CircularProgress />
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>
+                <Checkbox
+                  checked={selectAll}
+                  onChange={handleSelectAll}
+                  color="primary"
+                />
+                </TableCell>
+                <TableCell>Control Number</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell>Full Name</TableCell>
+                <TableCell>Location/Room</TableCell>
+                <TableCell>Requesitioner</TableCell>
+                <TableCell>Services</TableCell>
+                <TableCell>File</TableCell>
+                <TableCell>Menu</TableCell>
+              </TableRow>
+            </TableHead>
+            
+            <TableBody>
+              {displayedData.map((item, index) => (
+                <TableRow key={index}>
+                  <TableCell> 
+                      <Checkbox
+                        checked={selectedItems.includes(item.id)}
+                        onChange={() => handleSelection(item.id)}
+                      />
+                  </TableCell>
+                  <TableCell>{item.ControlNum}</TableCell>
+                  <TableCell>{item.Date}</TableCell>
+                  <TableCell>{item.FullName}</TableCell>
+                  <TableCell>{item.LocationRoom}</TableCell>
+                  <TableCell>{item.Requisitioner}</TableCell>
+                  <TableCell>{item.Services}</TableCell>
+                  <TableCell>
+                    {item.fileURL ? (
+                      // Render a clickable link to download the file
+                      <Link to={item.fileURL} target="_blank" download>
+                        Download 
+                      </Link>
+                    ) : (
+                      // Display "No File" if there's no file URL
+                      "No File"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <IconButton
+                      aria-label="menu"
+                      onClick={(event) => handleMenuOpen(event, item)}
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
+                  </TableCell>
+              </TableRow>
+
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+      <Dialog open={archiveDialogOpen} onClose={() => setArchiveDialogOpen(false)}>
+        <DialogTitle>Remove Document</DialogTitle>
+        <DialogContent>
+          Do you want to delete this document?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setArchiveDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleConfirmDeleteWithoutArchive} color="error">Delete</Button>
+        </DialogActions>
+      </Dialog>
+       <TablePagination
+        rowsPerPageOptions={[4, 10, 25]}
+        component="div"
+        count={filteredData.length} // Make sure this reflects the total number of rows
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
+
+      <Snackbar
+        open={snackbarOpenDelete}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpenDelete(false)}
+        message="The Service Request Document was deleted successfully!"
+      />
+
+
+    <Popover
+      open={Boolean(menuAnchorEl)}
+      anchorEl={menuAnchorEl}
+      onClose={handleMenuClose}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'right',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+    >
+      <MenuItem onClick={() => handleDelete(selectedItem.id)}>Remove</MenuItem>
+    </Popover>
+
+    <Dialog
+      open={deleteConfirmationDialogOpen}
+      onClose={() => setDeleteConfirmationDialogOpen(false)}
+    >
+      <DialogTitle>Confirm Delete</DialogTitle>
+      <DialogContent>
+        Are you sure you want to delete {selectedItems.length} items?
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setDeleteConfirmationDialogOpen(false)}>Cancel</Button>
+        <Button onClick={handleConfirmDeleteAll} color="error">Delete</Button>
+      </DialogActions>
+    </Dialog>
+
+        </Container>
+
     </>
-  );
-}
+  );}
+
+

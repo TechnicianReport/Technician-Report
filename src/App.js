@@ -26,13 +26,17 @@ export default function App() {
             <ScrollToTop />
             <StyledChart />
             <Routes>
-              {/* Always redirect to login */}
+              {/* Redirect to login if not authenticated */}
+              {!isAuthenticated && <Route path="*" element={<Navigate to="/" />} />}
+
+              {/* Define the login route */}
               <Route path="/" element={<LoginPage />} />
-              {/* <Route path="*" element={<Page404 />} /> */}
-              {/* Define other routes */}
+
+              {/* If isAuthenticated is true, render the Router component with its routes */}
+              {isAuthenticated && (
+                <Route path="/*" element={<Router />} />
+              )}
             </Routes>
-            {/* Render your protected routes */}
-            {isAuthenticated && <Router />}
           </ThemeProvider>
         </BrowserRouter>
       </HelmetProvider>

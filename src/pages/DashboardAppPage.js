@@ -1,4 +1,3 @@
-
 import { Helmet } from 'react-helmet-async';
 import { faker } from '@faker-js/faker';
 
@@ -30,37 +29,30 @@ export default function DashboardAppPage() {
   return (
     <>
       <Helmet>
-        <title> CICT Technician Report</title>
+        <title>CICT Technician Report</title>
       </Helmet>
 
-      <Container maxWidth="xl" sx={{ backgroundColor: '#F0EFF6',  borderRadius: '10px' }}>
+      <Container maxWidth="xl" sx={{ backgroundColor: '#F0EFF6', borderRadius: '10px' }}>
         <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }}>
           CICT Technician Report
         </Typography>
 
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary />
-            {/* <AppWidgetSummary title="Weekly Sales" total={714000} icon={'ant-design:android-filled'} /> */}
+            <AppWidgetSummary title="Weekly Sales" total={714000} icon={'ant-design:android-filled'} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-          <AppWidgetSummary color="info">
-            {Logo}
-          </AppWidgetSummary>
-            {/* <AppWidgetSummary title="New Users" total={1352831} color="info" icon={'ant-design:apple-filled'} /> */}
+            <AppWidgetSummary title="New Users" total={1352831} color="info" icon={'ant-design:apple-filled'} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-          <AppWidgetSummary color="warning"/>
-            {/* <AppWidgetSummary title="Item Orders" total={1723315} color="warning" icon={'ant-design:windows-filled'} /> */}
+            <AppWidgetSummary title="Item Orders" total={1723315} color="warning" icon={'ant-design:windows-filled'} />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-          <AppWidgetSummary color="error"/>
-            {/* <AppWidgetSummary title="Bug Reports" total={234} color="error" icon={'ant-design:bug-filled'} /> */}
+            <AppWidgetSummary title="Bug Reports" total={234} color="error" icon={'ant-design:bug-filled'} />
           </Grid>
-
 
           <Grid item xs={12} md={6} lg={8}>
             <AppNewsUpdate
