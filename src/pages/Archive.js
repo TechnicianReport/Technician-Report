@@ -3,7 +3,7 @@ import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getFirestore, collection, query, onSnapshot, doc, getDocs, where, updateDoc, deleteDoc, addDoc, getDoc, documentId } from '@firebase/firestore';
+import { getFirestore, collection, query, onSnapshot, doc, getDocs, where, updateDoc, deleteDoc, addDoc, getDoc, setDoc, documentId } from '@firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
 
@@ -52,10 +52,8 @@ const serviceRequestCollectionRef = collection(formsDocRef, "SERVICE-REQUEST");
 // Access ARCHIVES document under main collection
 const archivesRef = doc(mainCollectionRef, "ARCHIVES");
 
-const archivesCollectionRef = collection(archivesRef, "ARCHIVES-DOCUMENT");
+const archivesCollectionRef = collection(archivesRef, "ARCHIVES-FORMS");
 
-
-//  Clear the whole Form function
 export default function UserPage() {
   const [fetchedData, setFetchedData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +64,7 @@ export default function UserPage() {
     setIsLoading(true);
 
     try {
-      const querySnapshot = await getDocs(serviceRequestCollectionRef);
+      const querySnapshot = await getDocs(archivesCollectionRef);
       const dataFromFirestore = [];
 
       querySnapshot.forEach((doc) => {
@@ -104,10 +102,10 @@ export default function UserPage() {
   };
 
   const filteredData = fetchedData.filter((item) =>
-['ControlNum', 'Date', 'FullName', 'LocationRoom', 'Requisitioner', 'Services'].some(
-  (field) =>
-    item[field].toLowerCase().includes(searchQuery.toLowerCase())
-)
+  ['ControlNum', 'Date', 'FullName', 'LocationRoom', 'Requisitioner', 'Services'].some(
+    (field) =>
+      (item[field] && item[field].toLowerCase().includes(searchQuery.toLowerCase()))
+  )
 );
 
 // This one is for the Delete button
@@ -117,10 +115,10 @@ const handleConfirmDeleteWithoutArchive = async () => {
   try {
 
     if (documentToDelete) {
-      const sourceDocumentRef = doc(serviceRequestCollectionRef, documentToDelete);
+      const sourceDocumentRef = doc(archivesCollectionRef, documentToDelete);
       const sourceDocumentData = (await getDoc(sourceDocumentRef)).data();
    
-    await deleteDoc(doc(serviceRequestCollectionRef, documentToDelete));
+    await deleteDoc(doc(archivesCollectionRef, documentToDelete));
     
     // Update the UI by removing the deleted row
     setFetchedData((prevData) => prevData.filter((item) => item.id !== documentToDelete));
@@ -147,9 +145,74 @@ const handleDelete = (documentId) => {
   handleMenuClose();
 };
 
+// Function to increment the document name
+const incrementDocumentName = async (originalLocation) => {
+  try {
+    if (!originalLocation) {
+      throw new Error('Original location is empty or undefined.');
+    }
+
+    // Fetch existing document names from the "SERVICE-REQUEST" collection
+    const querySnapshot = await getDocs(collection(formsDocRef, originalLocation));
+    const existingDocumentNames = querySnapshot.docs.map((doc) => doc.id);
+
+    // Find the highest number and increment it by 1
+    let nextNumber = 0;
+    existingDocumentNames.forEach((docName) => {
+      const match = docName.match(/^SRF-(\d+)$/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!Number.isNaN(num) && num >= nextNumber) {
+          nextNumber = num + 1;
+        }
+      }
+    });
+
+    // Generate the new document name
+    const newDocumentName = `SRF-${nextNumber.toString().padStart(2, '0')}`;
+
+    return newDocumentName;
+  } catch (error) {
+    console.error('Error incrementing document name:', error);
+    return null; // Handle the error gracefully in your code
+  }
+};
+
+// For restoring Archives
+
+const [snackbarOpenRestore, setSnackbarOpenRestore] = useState(false); // Add this line for the restore snackbar
+
+const handleRestoreDocument = async (documentId, originalLocation) => {
+  try {
+    // Retrieve the archived document from the "ARCHIVES-FORMS" collection
+    const archivedDocumentRef = doc(archivesCollectionRef, documentId);
+    const archivedDocumentData = (await getDoc(archivedDocumentRef)).data();
+
+    // Set the "archived" field to false and "originalLocation" field
+    archivedDocumentData.archived = false;
+    archivedDocumentData.originalLocation = originalLocation;
+
+    // Generate a new document name using the incrementDocumentName function
+    const newDocumentName = await incrementDocumentName(originalLocation);
+
+    // Add the archived document back to its original location with the new name
+    const originalCollectionRef = collection(formsDocRef, originalLocation);
+    await setDoc(doc(originalCollectionRef, newDocumentName), archivedDocumentData);
+
+    // Delete the document from the "ARCHIVES-FORMS" collection
+    await deleteDoc(archivedDocumentRef);
+
+    // Update the UI by removing the restored document
+    setFetchedData((prevData) => prevData.filter((item) => item.id !== documentId));
+
+    // Show a success message
+    setSnackbarOpenRestore(true);
+  } catch (error) {
+    console.error('Error restoring document:', error);
+  }
+};
+
   // This one is for Pagination
-
-
 const [page, setPage] = useState(0); // Add these state variables for pagination
 const [rowsPerPage, setRowsPerPage] = useState(4);
 
@@ -172,13 +235,15 @@ const handleRowsPerPageChange = (event) => {
 
   const [snackbarOpenDelete, setSnackbarOpenDelete] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+
+
 // This one is for menu button
 const [menuAnchorEl, setMenuAnchorEl] = useState(null);
 const [selectedItem, setSelectedItem] = useState(null);
 
-const handleMenuOpen = (event, item) => {
+const handleMenuOpen = (event, selectedItem) => {
   setMenuAnchorEl(event.currentTarget);
-  setSelectedItem(item);
+  setSelectedItem(selectedItem); // Set the selected item here
 };
 
 const handleMenuClose = () => {
@@ -239,7 +304,7 @@ const handleConfirmDeleteAll = async () => {
   try {
     // Create an array of promises to delete each selected item
     const deletePromises = selectedItems.map(async (itemId) => {
-      return deleteDoc(doc(serviceRequestCollectionRef, itemId));
+      return deleteDoc(doc(archivesCollectionRef, itemId));
     });
 
     // Use Promise.all to await all the delete operations
@@ -288,6 +353,19 @@ const handleConfirmDeleteAll = async () => {
     setOpen(false);
   };
 
+  // For restore dialog
+  const [restoreConfirmationOpen, setRestoreConfirmationOpen] = useState(false);
+
+  // Function to open the restore confirmation dialog
+  const openRestoreConfirmation = () => {
+    setRestoreConfirmationOpen(true);
+    handleMenuClose();
+  };
+
+  // Function to close the restore confirmation dialog
+  const closeRestoreConfirmation = () => {
+    setRestoreConfirmationOpen(false);
+  };
   return (
     <>
       <Helmet>
@@ -414,6 +492,7 @@ const handleConfirmDeleteAll = async () => {
                     >
                       <MoreVertIcon />
                     </IconButton>
+                    
                   </TableCell>
               </TableRow>
 
@@ -450,21 +529,26 @@ const handleConfirmDeleteAll = async () => {
       />
 
 
-    <Popover
-      open={Boolean(menuAnchorEl)}
-      anchorEl={menuAnchorEl}
-      onClose={handleMenuClose}
-      anchorOrigin={{
-        vertical: 'bottom',
-        horizontal: 'right',
-      }}
-      transformOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
-      }}
-    >
-      <MenuItem onClick={() => handleDelete(selectedItem.id)}>Remove</MenuItem>
-    </Popover>
+    {selectedItem && (
+      <Popover
+        open={Boolean(menuAnchorEl)}
+        anchorEl={menuAnchorEl}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={() => handleDelete(selectedItem.id)}>Remove</MenuItem>
+        <MenuItem onClick={openRestoreConfirmation}>Restore</MenuItem>
+      </Popover>
+    )}
+
+
 
     <Dialog
       open={deleteConfirmationDialogOpen}
@@ -479,6 +563,29 @@ const handleConfirmDeleteAll = async () => {
         <Button onClick={handleConfirmDeleteAll} color="error">Delete</Button>
       </DialogActions>
     </Dialog>
+
+    <Dialog
+        open={restoreConfirmationOpen}
+        onClose={closeRestoreConfirmation}
+        aria-labelledby="restore-confirmation-dialog"
+      >
+        <DialogTitle>Confirm Restore</DialogTitle>
+        <DialogContent>
+          Are you sure you want to restore this document?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeRestoreConfirmation}>Cancel</Button>
+          <Button
+            onClick={() => {
+              handleRestoreDocument(selectedItem.id, selectedItem.originalLocation);
+              closeRestoreConfirmation(); // Close the confirmation dialog
+            }}
+            style={{ color: 'white', backgroundColor: 'green' }} // Apply the green color style here
+          >
+            Restore
+          </Button>
+        </DialogActions>
+      </Dialog>
 
         </Container>
 

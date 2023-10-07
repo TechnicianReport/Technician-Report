@@ -6,8 +6,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { getFirestore, collection, query, onSnapshot, doc, getDocs, where, updateDoc, deleteDoc, addDoc, getDoc, documentId, setDoc } from '@firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
-
-
 // @mui
 import {Card,Table,Stack,Paper,Avatar,Popover,Checkbox,TableRow,
         MenuItem,TableBody,TableCell,Container,Typography,IconButton,TableContainer,
@@ -52,9 +50,10 @@ const serviceRequestCollectionRef = collection(formsDocRef, "SERVICE-REQUEST");
 // Access ARCHIVES document under main collection
 const archivesRef = doc(mainCollectionRef, "ARCHIVES");
 
-const archivesCollectionRef = collection(archivesRef, "ARCHIVES-DOCUMENT");
+const archivesCollectionRef = collection(archivesRef, "ARCHIVES-FORMS");
 
-
+// Second declaration
+const storage = getStorage(firebaseApp);
 
 //  Clear the whole Form function
 export default function UserPage() {
@@ -144,42 +143,44 @@ const handleChange = (e) => {
 
 
  // function for Adding new documents
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services, fileURL } = formData;
+  const { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services, fileURL } = formData;
 
-    try {
-      // Use the current document name when adding a new document
-      const documentName = await incrementDocumentName();
+  try {
+    // Use the current document name when adding a new document
+    const documentName = await incrementDocumentName();
 
-      const docRef = doc(serviceRequestCollectionRef, documentName);
+    const docRef = doc(serviceRequestCollectionRef, documentName);
 
-      const docData = {
-        ControlNum,
-        Date,
-        FullName,
-        LocationRoom,
-        Requisitioner,
-        Services,
-        fileURL: fileURL || '',
-      };
+    const docData = {
+      ControlNum,
+      Date,
+      FullName,
+      LocationRoom,
+      Requisitioner,
+      Services,
+      fileURL: fileURL || '',
+      archived: false, // Include the 'archived' field and set it to false for new documents
+      originalLocation: "SERVICE-REQUEST", // Include the 'originalLocation' field
+    };
 
-      await setDoc(docRef, docData);
+    await setDoc(docRef, docData);
 
-      // Create a new data object that includes the custom ID
-      const newData = { ...docData, id: documentName };
+    // Create a new data object that includes the custom ID
+    const newData = { ...docData, id: documentName };
 
-      // Update the state with the new data, adding it to the table
-      setFetchedData([...fetchedData, newData]);
+    // Update the state with the new data, adding it to the table
+    setFetchedData([...fetchedData, newData]);
 
-      setOpen(false);
-      setSnackbarOpen(true);
-    } catch (error) {
-      console.error(error);
-      alert("Input cannot be incomplete");
-    }
-  };
+    setOpen(false);
+    setSnackbarOpen(true);
+  } catch (error) {
+    console.error(error);
+    alert("Input cannot be incomplete");
+  }
+};
 
   //  This one is for Search bar
   const [searchQuery, setSearchQuery] = useState('');
@@ -199,14 +200,23 @@ const handleChange = (e) => {
 
 // This one is for the Edit button
 const [editData, setEditData] = useState(null);
-
-
 const [editOpen, setEditOpen] = useState(false);
-
 
 const handleEditOpen = (data) => {
   if (data && data.id) {
-    setEditData(data); 
+    // Populate the form fields with existing data
+    setFormData({
+      ...formData,
+      ControlNum: data.ControlNum || '',
+      Date: data.Date || '',
+      FullName: data.FullName || '',
+      LocationRoom: data.LocationRoom || '',
+      Requisitioner: data.Requisitioner || '',
+      Services: data.Services || '',
+      fileURL: data.fileURL || '',
+      id: data.id, // Set the document ID here
+    });
+    setEditData(data);
     setEditOpen(true);
     handleMenuClose();
   }
@@ -218,14 +228,36 @@ const handleEditClose = () => {
 };
 
 const handleEditSubmit = async () => {
-  
   try {
-    const docRef = doc(serviceRequestCollectionRef, editData.id); // Assuming you have an 'id' field in your data
-    await updateDoc(docRef, editData);
+    const docRef = doc(serviceRequestCollectionRef, formData.id); // Use the document ID for updating
+
+    // Update the editData object with the new file URL
+    editData.fileURL = formData.fileURL;
+
+    await updateDoc(docRef, editData); // Use editData to update the document
     handleEditClose();
     setSnackbarOpen1(true);
   } catch (error) {
     console.error("Error updating data in Firestore: ", error);
+  }
+};
+
+// This one is still for Edit button but for the file upload part
+
+
+const handleFileEditUpload = async (file) => {
+  const docRef = doc(serviceRequestCollectionRef, formData.id); // Use the document ID for updating
+  try {
+    if (file) {
+      const storageRef = ref(storage, `documents/${file.name}`);
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+
+      // Update the Firestore document here using 'updateDoc' or another method
+      await updateDoc(docRef, { fileURL: downloadURL });
+    }
+  } catch (error) {
+    console.error("Error uploading file:", error);
   }
 };
 
@@ -276,15 +308,37 @@ const handleConfirmDelete = async () => {
   try {
     if (documentToDelete) {
       const sourceDocumentRef = doc(serviceRequestCollectionRef, documentToDelete);
+      // Set the 'originalLocation' field to the current collection and update the Archive as true
+      await updateDoc(sourceDocumentRef, { archived: true, originalLocation: "SERVICE-REQUEST" });
       const sourceDocumentData = (await getDoc(sourceDocumentRef)).data();
 
-      // Add the document to the "Archives" collection with a new unique ID
-      await addDoc(archivesCollectionRef, sourceDocumentData);
 
-      // Delete the original document
+      // Fetch existing document names from the Archives collection
+      const archivesQuerySnapshot = await getDocs(archivesCollectionRef);
+      const existingDocumentNames = archivesQuerySnapshot.docs.map((doc) => doc.id);
+
+      // Find the highest number and increment it by 1
+      let nextNumber = 0;
+      existingDocumentNames.forEach((docName) => {
+        const match = docName.match(/^SRF-(\d+)$/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (!Number.isNaN(num) && num >= nextNumber) {
+            nextNumber = num + 1;
+          }
+        }
+      });
+
+      // Generate the new document name
+      const newDocumentName = `SRF-${nextNumber.toString().padStart(2, "0")}`;
+
+      // Add the document to the "Archives" collection with the new document name
+      await setDoc(doc(archivesCollectionRef, newDocumentName), sourceDocumentData);
+
+      // Delete the original document from the Service Request collection
       await deleteDoc(doc(serviceRequestCollectionRef, documentToDelete));
 
-      // Update the UI by removing the deleted row
+      // Update the UI by removing the archived document
       setFetchedData((prevData) => prevData.filter((item) => item.id !== documentToDelete));
 
       // Show a success message
@@ -302,7 +356,6 @@ const handleConfirmDelete = async () => {
 
   // This one is for Uploading files 
 
-  const storage = getStorage(firebaseApp);
 
   const handleFileUpload = async (file) => {
   try {
@@ -804,6 +857,11 @@ const handleConfirmDeleteAll = async () => {
               placeholder="Services"
               value={editData ? editData.Services : ''}
               onChange={(e) => setEditData({ ...editData, Services: e.target.value })}
+              />
+              <TextField
+                type="file"
+                accept=".pdf"
+                onChange={(e) => handleFileEditUpload(e.target.files[0])}
               />
 
             {/* Add similar fields for other data */}
