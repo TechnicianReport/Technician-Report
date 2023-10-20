@@ -10,7 +10,7 @@ import { initializeApp } from 'firebase/app';
 import {Card,Table,Stack,Paper,Avatar,Popover,Checkbox,TableRow,
         MenuItem,TableBody,TableCell,Container,Typography,IconButton,TableContainer,
         TablePagination,Dialog, DialogTitle, DialogContent, DialogActions, Button, 
-        Backdrop, Snackbar, TableHead, CircularProgress, TextField} from '@mui/material';
+        Backdrop, Snackbar, TableHead, CircularProgress, TextField, Select} from '@mui/material';
 
 // components
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -83,6 +83,7 @@ const handleChange = (e) => {
     LocationRoom: '',
     Requisitioner: '',
     Services: '',
+    fileInput: '',
     fileURL: '',
   };
 
@@ -632,83 +633,119 @@ const handleConfirmDeleteAll = async () => {
           </Button>
         </div>
         
-          <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Service Request Form</DialogTitle>
-        <DialogContent>
-           <form onSubmit={handleSubmit}>
-           <TextField
-              type="date"
-              name="Date"
-              placeholder="Date"
-              value={formData.Date || ''}
-              onChange={(e) => setFormData({ ...formData, Date: e.target.value })}
-              sx={{ width: '70%' }}
-            />
-            <TextField
-              type="text"
-              name="ControlNum"
-              placeholder="Control Number"
-              value={formData.ControlNum || ''}
-              onChange={(e) => setFormData({ ...formData, ControlNum: e.target.value })}
-              sx={{ width: '70%' }}
-            />
-            <br />
-            <TextField
-              type="text"
-              name="FullName"
-              placeholder="Faculty Name"
-              value={formData.FullName || ''}
-              onChange={(e) => setFormData({ ...formData, FullName: e.target.value })}
-              sx={{ width: '70%' }}
-            />
-            <br />
-            <TextField
-              type="text"
-              name="LocationRoom"
-              placeholder="Location/Room"
-              value={formData.LocationRoom || ''}
-              onChange={(e) => setFormData({ ...formData, LocationRoom: e.target.value })}
-              sx={{ width: '70%' }}
-            />
-            <br />
-            <TextField
-              type="text"
-              name="Services"
-              placeholder="Services"
-              value={formData.Services || ''}
-              onChange={(e) => setFormData({ ...formData, Services: e.target.value })}
-              sx={{ width: '70%' }}
-            />
-            <br />
-            <TextField
-              type="text"
-              name="Requisitioner"
-              placeholder="Requisitioner"
-              value={formData.Requisitioner || ''}
-              onChange={(e) => setFormData({ ...formData, Requisitioner: e.target.value })}
-              sx={{ width: '70%' }}
-            />
-        </form>
-        </DialogContent>
-        <DialogActions>
-        <input
-          type="file"
-          accept=".pdf"
-          onChange={(e) => handleFileUpload(e.target.files[0])}
-        />
-        <Button variant="contained" onClick={clearForm} >
-            Clear
-          </Button>
-          <Button variant="contained" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button variant="contained" onClick={handleSubmit} type="submit" >
-            Create
-          </Button>
-         
+        <Dialog open={open} onClose={handleClose}>
+              {/* <DialogTitle>Service Request Form</DialogTitle> */}
+              <Typography variant="h3" sx={{ mb: 5 }} style={{ color: '#ff5500' , margin: 'auto'}}>
+                  Service Request Form
+              </Typography>
 
-        </DialogActions>
-      </Dialog>
+
+              <DialogContent>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', width: '50vh', margin: 'auto' }}>
+                  <form onSubmit={handleSubmit}>
+                    <div style={{ display: 'flex', flexDirection: 'row', marginBottom: '10px' }}>
+                      <TextField
+                        type="date"
+                        name="Date"
+                        placeholder="Date"
+                        value={formData.Date || ''}
+                        onChange={(e) => setFormData({ ...formData, Date: e.target.value })}
+                        sx={{ width: '50%', marginRight: '5px' }} // Adjust the width as needed
+                      />
+                      <TextField
+                        type="text"
+                        name="ControlNum"
+                        placeholder="Control Number"
+                        value={formData.ControlNum || ''}
+                        onChange={(e) => setFormData({ ...formData, ControlNum: e.target.value })}
+                        sx={{ width: '50%', marginLeft: '5px' }} // Adjust the width as needed
+                      />
+                    </div>
+                    <br />
+                    <TextField
+                      type="text"
+                      name="FullName"
+                      placeholder="Faculty Name"
+                      value={formData.FullName || ''}
+                      onChange={(e) => setFormData({ ...formData, FullName: e.target.value })}
+                      sx={{ width: '100%', marginBottom: '10px' }}  // Add marginBottom for spacing
+                    />
+                    <br />
+                    <TextField
+                      type="text"
+                      name="LocationRoom"
+                      placeholder="Location/Room"
+                      value={formData.LocationRoom || ''}
+                      onChange={(e) => setFormData({ ...formData, LocationRoom: e.target.value })}
+                      sx={{ width: '100%', marginBottom: '10px' }}  // Add marginBottom for spacing
+                    />
+                    <br />
+                    <div style={{ marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ width: '30px' }}>
+                          <Checkbox
+                            name="ServiceFormRequest"
+                            checked={formData.Services === 'Service Form Request'}
+                            onChange={(e) => setFormData({ ...formData, Services: e.target.checked ? 'Service Form Request' : '' })}
+                          />
+                        </div>
+                        <div>Service Form Request</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ width: '30px' }}>
+                          <Checkbox
+                            name="BorrowersForm"
+                            checked={formData.Services === 'Borrowers form'}
+                            onChange={(e) => setFormData({ ...formData, Services: e.target.checked ? 'Borrowers form' : '' })}
+                          />
+                        </div>
+                        <div>Borrowers form</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ width: '30px' }}>
+                          <Checkbox
+                            name="RequestItem"
+                            checked={formData.Services === 'Request Item'}
+                            onChange={(e) => setFormData({ ...formData, Services: e.target.checked ? 'Request Item' : '' })}
+                          />
+                        </div>
+                        <div>Request Item</div>
+                      </div>
+                    </div>
+                    <br />
+                    <TextField
+                      type="text"
+                      name="Requisitioner"
+                      placeholder="Requisitioner"
+                      value={formData.Requisitioner || ''}
+                      onChange={(e) => setFormData({ ...formData, Requisitioner: e.target.value })}
+                      sx={{ width: '100%', marginBottom: '10px' }}  // Add marginBottom for spacing
+                    />
+                    <br />
+                    <TextField
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => handleFileUpload(e.target.files[0])}
+                      sx={{ width: '100%' }}
+                    />
+                  </form>
+                </div>
+              </DialogContent>
+              <DialogActions>
+                {/* <input type="file" accept=".pdf" onChange={(e) => handleFileUpload(e.target.files[0])} /> */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' , margin: 'auto' }}>
+                <Button variant="contained" onClick={clearForm} sx={{marginRight: '5px', marginLeft: '5px'}}>
+                  Clear
+                </Button>
+                <Button variant="contained" onClick={handleClose} sx={{marginRight: '5px', marginLeft: '5px'}}>
+                  Cancel
+                </Button>
+                <Button variant="contained" onClick={handleSubmit} type="submit" sx={{marginRight: '5px', marginLeft: '5px'}}>
+                  Create
+                </Button>
+                </div>
+              </DialogActions>
+            </Dialog>
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -860,8 +897,10 @@ const handleConfirmDeleteAll = async () => {
               />
               <TextField
                 type="file"
-                accept=".pdf"
+                name="fileInput"
+                accept=".pdf,.png,.jpg,.jpeg,.xlsx,.doc,.xls,text/plain"
                 onChange={(e) => handleFileEditUpload(e.target.files[0])}
+                inputProps={{ className: "w-full rounded-md border border-stroke p-3 outline-none transition file:mr-4 file:rounded file:border-[0.5px] file:border-stroke dark:file:border-strokedark file:bg-[#EEEEEE] dark:file:bg-white/30 dark:file:text-white file:py-1 file:px-2.5 file:text-sm file:font-medium focus:border-primary file:focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input" }}
               />
 
             {/* Add similar fields for other data */}

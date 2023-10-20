@@ -1,12 +1,17 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-// @mui
-import { Link, Stack, IconButton, InputAdornment, TextField, Checkbox, appBarClasses, Typography } from '@mui/material';
+import { useState, useEffect } from 'react'; // Import useEffect
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Link,
+  Stack,
+  IconButton,
+  InputAdornment,
+  TextField,
+  Checkbox,
+  Typography,
+} from '@mui/material';
 import { LoadingButton } from '@mui/lab';
-// components
-
-import { initializeApp } from 'firebase/app'; 
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth"; 
+import { initializeApp} from 'firebase/app';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import Iconify from '../../../components/iconify';
 
 const firebaseConfig = {
@@ -22,18 +27,48 @@ const app = initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
 
-
 // ----------------------------------------------------------------------
 
 export default function LoginForm() {
   const navigate = useNavigate();
+  const location = useLocation(); // Access the location object
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null); // State variable for error message
   
+  const [authenticated, setAuthenticated] = useState(false); // Define setAuthenticated
+
   
+  // useEffect(() => {
+  //   // Check if the user is already authenticated, then navigate to the dashboard
+  //   const unsubscribe = auth.onAuthStateChanged((user) => {
+  //     if (user) {
+  //       navigate('/dashboard', { replace: true });
+  //     }
+  //   });
+  //   return () => unsubscribe();
+  // }, [navigate]);
+
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setAuthenticated(!!user);
+      setIsLoading(false);
+
+      if (!!user) {
+        const prevPath = location.state?.from || '/dashboard'; // Get the previous path from location state
+        navigate(prevPath);
+        localStorage.setItem('authenticated', 'true');
+      }
+    });
+
+    const isUserAuthenticated = localStorage.getItem('authenticated') === 'true';
+    setAuthenticated(isUserAuthenticated);
+
+    return () => unsubscribe();
+  }, [navigate, location]);
 
   const handleLogin = async () => {
     try {
@@ -50,6 +85,19 @@ export default function LoginForm() {
       setIsLoading(false);
     }
   };
+
+//   auth.onAuthStateChanged(() => {
+//   // The Auth service is now fully initialized
+
+//   // Set session persistence for Firebase Authentication
+//   auth.setPersistence(auth.Auth.Persistence.SESSION)
+//     .then(() => {
+//       // The session persistence is set.
+//     })
+//     .catch((error) => {
+//       console.error('Error setting session persistence:', error);
+//     });
+// });
 
   return (
     <>
