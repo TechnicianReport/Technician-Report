@@ -23,7 +23,7 @@ const navConfig = [
         path: '/dashboard/service_request',
       },
       {
-        title: "Borrower's Items Form",
+        title: "Borrower's Form",
         path: '/dashboard/borrowers_item',
       },
       {

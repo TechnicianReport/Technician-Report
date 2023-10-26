@@ -577,8 +577,11 @@ const handleConfirmDeleteAll = async () => {
           <Button onClick={closeRestoreConfirmation}>Cancel</Button>
           <Button
             onClick={() => {
-              handleRestoreDocument(selectedItem.id, selectedItem.originalLocation);
-              closeRestoreConfirmation(); // Close the confirmation dialog
+              if (selectedItem && selectedItem.id && selectedItem.originalLocation) {
+                handleRestoreDocument(selectedItem.id, selectedItem.originalLocation);
+                closeRestoreConfirmation(); // Close the confirmation dialog
+              }
+              
             }}
             style={{ color: 'white', backgroundColor: 'green' }} // Apply the green color style here
           >

@@ -25,6 +25,8 @@ import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 // mock
 import USERLIST from '../_mock/user';
 
+// ----------------------------------------------------------------------
+
 const firebaseConfig = {
   apiKey: "AIzaSyDHFEWRU949STT98iEDSYe9Rc-WxcL3fcc",
   authDomain: "wp4-technician-dms.firebaseapp.com",
@@ -47,7 +49,7 @@ const mainCollectionRef = collection(db, "WP4-TECHNICIAN-DMS");
 const formsDocRef = doc(mainCollectionRef, "FORMS");
 
 // Add to subcollection 
-const serviceRequestCollectionRef = collection(formsDocRef, "SERVICE-REQUEST");
+const InspectionReportCollectionRef = collection(formsDocRef, "INSPECTION-REPORT-FORM");
 
 // Access ARCHIVES document under main collection
 const archivesRef = doc(mainCollectionRef, "ARCHIVES");
@@ -56,6 +58,8 @@ const archivesCollectionRef = collection(archivesRef, "ARCHIVES-FORMS");
 
 // Second declaration
 const storage = getStorage(firebaseApp);
+
+// ----------------------------------------------------------------------
 
 //  Clear the whole Form function
 export default function UserPage() {
@@ -72,9 +76,9 @@ const handleChange = (e) => {
     Date: '',
     FullName: '',
     LocationRoom: '',
-    Requisitioner: '',
-    Services: '',
-    Remarks: '',
+    Inspection: '',
+    InspectedBy: '',
+    NotedBy: '',
     fileInput: '',
     fileURL: '',
   };
@@ -85,14 +89,14 @@ const handleChange = (e) => {
 
   // Handle change function
 const [formData, setFormData] = useState({
-  ControlNum: '', // Add default values here
-  Date: '',       // Add default values here
-  FullName: '',   // Add default values here
-  LocationRoom: '', // Add default values here
-  Requisitioner: '', // Add default values here
-  Services: '',  // Add default values here
-  Remarks: '',
-  fileURL: '',    // Add default values here
+  ControlNum: '',
+  Date: '',
+  FullName: '',
+  LocationRoom: '',
+  Inspection: '',
+  InspectedBy: '',
+  NotedBy: '',
+  fileURL: '',
 });
 
 // Show Query or the table, fetch data from firestore
@@ -101,7 +105,7 @@ const [formData, setFormData] = useState({
     setIsLoading(true);
 
     try {
-      const querySnapshot = await getDocs(serviceRequestCollectionRef);
+      const querySnapshot = await getDocs(InspectionReportCollectionRef);
       const dataFromFirestore = [];
 
       querySnapshot.forEach((doc) => {
@@ -131,7 +135,7 @@ const [formData, setFormData] = useState({
     const newDocumentName = `SRF-${nextNumber.toString().padStart(2, "0")}`;
 
     // Check if the document with the new name already exists
-    const docSnapshot = await getDoc(doc(serviceRequestCollectionRef, newDocumentName));
+    const docSnapshot = await getDoc(doc(InspectionReportCollectionRef, newDocumentName));
 
     if (docSnapshot.exists()) {
       // The document with the new name exists, so increment and try again
@@ -147,25 +151,25 @@ const [formData, setFormData] = useState({
  const handleSubmit = async (e) => {
   e.preventDefault();
 
-  const { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services=[],Remarks, fileURL } = formData;
+  const { ControlNum, Date, FullName, LocationRoom, Inspection, InspectedBy, NotedBy, fileURL } = formData;
 
   try {
     // Use the current document name when adding a new document
     const documentName = await incrementDocumentName();
 
-    const docRef = doc(serviceRequestCollectionRef, documentName);
+    const docRef = doc(InspectionReportCollectionRef, documentName);
 
     const docData = {
       ControlNum,
       Date,
       FullName,
       LocationRoom,
-      Requisitioner,
-      Services,
-      Remarks,
+      Inspection,
+      InspectedBy,
+      NotedBy,
       fileURL: fileURL || '',
       archived: false, // Include the 'archived' field and set it to false for new documents
-      originalLocation: "SERVICE-REQUEST", // Include the 'originalLocation' field
+      originalLocation: "INSPECTION-REPORT", // Include the 'originalLocation' field
     };
 
     await setDoc(docRef, docData);
@@ -194,7 +198,7 @@ const [formData, setFormData] = useState({
   };
 
   const filteredData = fetchedData.filter((item) => {
-    const fieldsToSearchIn = ['ControlNum', 'Date', 'FullName', 'LocationRoom', 'Requisitioner'];
+    const fieldsToSearchIn = ['ControlNum', 'Date', 'FullName', 'LocationRoom', 'Inspection', 'InspectedBy' , 'NotedBy'];
   
     const servicesMatch = (item, searchQuery) => {
       return item.Services && Array.isArray(item.Services) &&
@@ -225,8 +229,9 @@ const handleEditOpen = (data) => {
       Date: data.Date || '',
       FullName: data.FullName || '',
       LocationRoom: data.LocationRoom || '',
-      Requisitioner: data.Requisitioner || '',
-      Services: data.Services || '',
+      Inspection: data.Inspection || '',
+      InspectedBy: data.InspectedBy|| '',
+      Notedby: data.Notedby || '',
       fileURL: data.fileURL || '',
       id: data.id, // Set the document ID here
     });
@@ -243,7 +248,7 @@ const handleEditClose = () => {
 
 const handleEditSubmit = async () => {
   try {
-    const docRef = doc(serviceRequestCollectionRef, formData.id); // Use the document ID for updating
+    const docRef = doc(InspectionReportCollectionRef, formData.id); // Use the document ID for updating
 
     // Update the editData object with the new file URL
     editData.fileURL = formData.fileURL;
@@ -260,7 +265,7 @@ const handleEditSubmit = async () => {
 
 
 const handleFileEditUpload = async (file) => {
-  const docRef = doc(serviceRequestCollectionRef, formData.id); // Use the document ID for updating
+  const docRef = doc(InspectionReportCollectionRef, formData.id); // Use the document ID for updating
   try {
     if (file) {
       const storageRef = ref(storage, `documents/${file.name}`);
@@ -282,10 +287,10 @@ const handleConfirmDeleteWithoutArchive = async () => {
   try {
 
     if (documentToDelete) {
-      const sourceDocumentRef = doc(serviceRequestCollectionRef, documentToDelete);
+      const sourceDocumentRef = doc(InspectionReportCollectionRef, documentToDelete);
       const sourceDocumentData = (await getDoc(sourceDocumentRef)).data();
    
-    await deleteDoc(doc(serviceRequestCollectionRef, documentToDelete));
+    await deleteDoc(doc(InspectionReportCollectionRef, documentToDelete));
     
     // Update the UI by removing the deleted row
     setFetchedData((prevData) => prevData.filter((item) => item.id !== documentToDelete));
@@ -321,9 +326,9 @@ const [snackbarOpenArchive, setSnackbarOpenArchive] = useState(false);
 const handleConfirmDelete = async () => {
   try {
     if (documentToDelete) {
-      const sourceDocumentRef = doc(serviceRequestCollectionRef, documentToDelete);
+      const sourceDocumentRef = doc(InspectionReportCollectionRef, documentToDelete);
       // Set the 'originalLocation' field to the current collection and update the Archive as true
-      await updateDoc(sourceDocumentRef, { archived: true, originalLocation: "SERVICE-REQUEST" });
+      await updateDoc(sourceDocumentRef, { archived: true, originalLocation: "INSPECTION-REPORT" });
       const sourceDocumentData = (await getDoc(sourceDocumentRef)).data();
 
 
@@ -350,7 +355,7 @@ const handleConfirmDelete = async () => {
       await setDoc(doc(archivesCollectionRef, newDocumentName), sourceDocumentData);
 
       // Delete the original document from the Service Request collection
-      await deleteDoc(doc(serviceRequestCollectionRef, documentToDelete));
+      await deleteDoc(doc(InspectionReportCollectionRef, documentToDelete));
 
       // Update the UI by removing the archived document
       setFetchedData((prevData) => prevData.filter((item) => item.id !== documentToDelete));
@@ -407,7 +412,7 @@ const handleConfirmDelete = async () => {
       const handleUploadSubmit = async (e) => {
     e.preventDefault();
 
-    const { ControlNum, Date, FullName, LocationRoom, Requisitioner, Services, fileURL } = formData;
+    const { ControlNum, Date, FullName, LocationRoom, Inspection, InspectedBy, NotedBy, fileURL } = formData;
 
     // Ensure that the fileURL is set to a default value or handle it appropriately
     const docData = {
@@ -415,13 +420,14 @@ const handleConfirmDelete = async () => {
       Date,
       FullName,
       LocationRoom,
-      Requisitioner,
-      Services,
+      Inspection,
+      InspectedBy,
+      NotedBy,
       fileURL: fileURL || '', // Set a default value or handle it based on your use case
     };
 
     try {
-      const docRef = await addDoc(serviceRequestCollectionRef, docData);
+      const docRef = await addDoc(InspectionReportCollectionRef, docData);
 
       const newDocumentId = docRef.id;
 
@@ -530,7 +536,7 @@ const handleConfirmDeleteAll = async () => {
   try {
     // Create an array of promises to delete each selected item
     const deletePromises = selectedItems.map(async (itemId) => {
-      return deleteDoc(doc(serviceRequestCollectionRef, itemId));
+      return deleteDoc(doc(InspectionReportCollectionRef, itemId));
     });
 
     // Use Promise.all to await all the delete operations
@@ -621,14 +627,14 @@ const handleViewClose = () => {
   return (
     <>
       <Helmet>
-        <title> Service Request Form | Minimal UI </title>
+        <title> Inspection Report Form | Minimal UI </title>
       </Helmet>
 
       <Container>
 
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
       <Typography variant="h2" sx={{ mb: 5 }} style={{ color: '#ff5500' }}>
-        Service Request Form
+        Inspection Report Form
       </Typography>
     </Stack>
 
@@ -689,7 +695,7 @@ const handleViewClose = () => {
           <div style={{ display: 'flex', flexDirection: 'row' }}>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <Typography variant="h3" sx={{ mb: 5 }} style={{ alignSelf: 'center', color: '#ff5500', margin: 'auto', fontSize: '40px', fontWeight: 'bold', marginTop:'10px' }}>
-                SERVICE REQUEST
+                INSPECTION REPORT
               </Typography>
               <DialogContent>
                 <form onSubmit={handleSubmit}>
@@ -731,72 +737,28 @@ const handleViewClose = () => {
                   <br />
                   <TextField
                     type="text"
-                    name="Requisitioner"
-                    placeholder="Requisitioner"
-                    value={formData.Requisitioner || ''}
-                    onChange={(e) => setFormData({ ...formData, Requisitioner: e.target.value })}
+                    name="Inspection"
+                    placeholder="Inspection"
+                    value={formData.Inspection || ''}
+                    onChange={(e) => setFormData({ ...formData, Inspection: e.target.value })}
                     sx={{ width: '100%', marginBottom: '10px' }}
                   />
                   <br />
-                  
-                  <fieldset>
-                    <legend name="Services" >SERVICES:</legend>
-                    <Checkbox
-                      value=" Application Installation,"
-                      checked={formData.Services.includes(' Application Installation,')}
-                      onChange={handleServiceChange}
-                    />
-                    Application Installation
-                    <br />
-                    <Checkbox
-                      value=" Network,"
-                      checked={formData.Services.includes(' Network,')}
-                      onChange={handleServiceChange}
-                    />
-                    Network
-                    <br />
-                    <Checkbox
-                      value=" Inventory,"
-                      checked={formData.Services.includes(' Inventory,')}
-                      onChange={handleServiceChange}
-                    />
-                    Inventory
-                    <br />
-                    <Checkbox 
-                      value=" Reformat,"
-                      checked={formData.Services.includes(' Reformat,')}
-                      onChange={handleServiceChange}
-                    />
-                    Reformat
-                    <br />
-                    <Checkbox
-                      value=" Repair,"
-                      checked={formData.Services.includes(' Repair,')}
-                      onChange={handleServiceChange}
-                    />
-                    Repair
-                    <br />
-
-                    <Checkbox
-                      value={formData.otherServices || ' Others,'}
-                      checked={formData.Services.includes(' Others,')}
-                      onChange={handleServiceChange}
-                    />
-                    Others:
-                    <input
-                      type="text"
-                      value={formData.otherServices}
-                      onChange={handleOtherServicesChange}
-                      disabled={!formData.Services.includes(' Others,')}
-                    />
-                  </fieldset>
-                  <br/>
                   <TextField
                     type="text"
-                    name="Remarks"
-                    placeholder="Remarks"
-                    value={formData.Remarks || ''}
-                    onChange={(e) => setFormData({ ...formData, Remarks: e.target.value })}
+                    name="InspectedBy"
+                    placeholder="InspectedBy"
+                    value={formData.InspectedBy || ''}
+                    onChange={(e) => setFormData({ ...formData, InspectedBy: e.target.value })}
+                    sx={{ width: '100%', marginBottom: '10px' }}
+                  />
+                  <br />
+                  <TextField
+                    type="text"
+                    name="NotedBy"
+                    placeholder="NotedBy"
+                    value={formData.NotedBy || ''}
+                    onChange={(e) => setFormData({ ...formData, NotedBy: e.target.value })}
                     sx={{ width: '100%', marginBottom: '10px' }}
                   />
                   <br/>
@@ -855,8 +817,9 @@ const handleViewClose = () => {
                 <TableCell>Date</TableCell>
                 <TableCell>Full Name</TableCell>
                 <TableCell>Location/Room</TableCell>
-                <TableCell>Requesitioner</TableCell>
-                <TableCell>Services</TableCell>
+                <TableCell>Inspection</TableCell>
+                <TableCell>Inspected by</TableCell>
+                <TableCell>Noted by</TableCell>
                 <TableCell>File</TableCell>
                 <TableCell>Menu</TableCell>
               </TableRow>
@@ -875,8 +838,9 @@ const handleViewClose = () => {
                   <TableCell>{item.Date}</TableCell>
                   <TableCell>{item.FullName}</TableCell>
                   <TableCell>{item.LocationRoom}</TableCell>
-                  <TableCell>{item.Requisitioner}</TableCell>
-                  <TableCell>{item.Services}</TableCell>
+                  <TableCell>{item.Inspection}</TableCell>
+                  <TableCell>{item.InspectedBy}</TableCell>
+                  <TableCell>{item.NotedBy}</TableCell>
                   <TableCell>
                     {item.fileURL ? (
                       // Render a clickable link to download the file
@@ -929,7 +893,7 @@ const handleViewClose = () => {
         <div style={{ display: 'flex', flexDirection: 'row' }}>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <Typography variant="h3" sx={{ mb: 5 }} style={{ alignSelf: 'center', color: '#ff5500', margin: 'auto', fontSize: '40px', fontWeight: 'bold', marginTop:'10px' }}>
-                SERVICE REQUEST
+                INSPECTION REPORT
               </Typography>
         <DialogContent>
           <form onSubmit={handleEditSubmit}>
@@ -972,72 +936,28 @@ const handleViewClose = () => {
                   <br />
                   <TextField
                     type="text"
-                    name="Requesitioner"
-                    placeholder="Requesitioner"
-                    value={editData ? editData.Requisitioner : ''}
+                    name="Inspection"
+                    placeholder="Inspection"
+                    value={editData ? editData.Inspection : ''}
                     onChange={(e) => setEditData({ ...editData, Date: e.target.value })}
                     sx={{ width: '100%', marginBottom: '10px' }}
                   />
                   <br />
-
-                  <fieldset>
-                    <legend name="Services" >SERVICES:</legend>
-                    <Checkbox
-                      value=" Application Installation,"
-                      checked={formData.Services.includes(' Application Installation,')}
-                      onChange={handleServiceChange}
-                    />
-                    Application Installation
-                    <br />
-                    <Checkbox
-                      value=" Network,"
-                      checked={formData.Services.includes(' Network,')}
-                      onChange={handleServiceChange}
-                    />
-                    Network
-                    <br />
-                    <Checkbox
-                      value=" Inventory,"
-                      checked={formData.Services.includes(' Inventory,')}
-                      onChange={handleServiceChange}
-                    />
-                    Inventory
-                    <br />
-                    <Checkbox 
-                      value=" Reformat,"
-                      checked={formData.Services.includes(' Reformat,')}
-                      onChange={handleServiceChange}
-                    />
-                    Reformat
-                    <br />
-                    <Checkbox
-                      value=" Repair,"
-                      checked={formData.Services.includes(' Repair,')}
-                      onChange={handleServiceChange}
-                    />
-                    Repair
-                    <br />
-
-                    <Checkbox
-                      value={formData.otherServices || ' Others,'}
-                      checked={formData.Services.includes(' Others,')}
-                      onChange={handleServiceChange}
-                    />
-                    Others:
-                    <input
-                      type="text"
-                      value={formData.otherServices}
-                      onChange={handleOtherServicesChange}
-                      disabled={!formData.Services.includes(' Others,')}
-                    />
-                  </fieldset>
-                  <br/>
                   <TextField
                     type="text"
-                    name="Remarks"
-                    placeholder="Remarks"
-                    value={editData ? editData.Remarks :''}
-                    onChange={(e) => setEditData({ ...editData, Remarks: e.target.value })}
+                    name="InspectedBy"
+                    placeholder="Inspected by"
+                    value={editData ? editData.InspectedBy : ''}
+                    onChange={(e) => setEditData({ ...editData, Date: e.target.value })}
+                    sx={{ width: '100%', marginBottom: '10px' }}
+                  />
+                  <br />
+                  <TextField
+                    type="text"
+                    name="NotedBy"
+                    placeholder="Noted by"
+                    value={editData ? editData.NotedBy : ''}
+                    onChange={(e) => setEditData({ ...editData, Date: e.target.value })}
                     sx={{ width: '100%', marginBottom: '10px' }}
                   />
                   <br/>
@@ -1068,20 +988,20 @@ const handleViewClose = () => {
         open={snackbarOpen1}
         autoHideDuration={6000}
         onClose={() => setSnackbarOpen1(false)}
-        message="The Service Request Document was edited successfully!"
+        message="The Inspection Report Document was edited successfully!"
       />
       <Snackbar
         open={snackbarOpenDelete}
         autoHideDuration={6000}
         onClose={() => setSnackbarOpenDelete(false)}
-        message="The Service Request Document was deleted successfully!"
+        message="The Inspection Report Document was deleted successfully!"
       />
 
       <Snackbar
         open={snackbarOpenArchive}
         autoHideDuration={6000}
         onClose={() => setSnackbarOpenArchive(false)}
-        message="The Service Request Document was archived successfully!"
+        message="The Inspection Report Document was archived successfully!"
       />
     <Popover
       open={Boolean(menuAnchorEl)}
@@ -1106,7 +1026,7 @@ const handleViewClose = () => {
         <div style={{ display: 'flex', flexDirection: 'row' }}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="h3" sx={{ mb: 5 }} style={{ alignSelf: 'center', color: '#ff5500', margin: 'auto', fontSize: '40px', fontWeight: 'bold', marginTop: '10px' }}>
-              SERVICE REQUEST
+              INSPECTION REPORT
             </Typography>
             <DialogContent>
                 <Typography variant="subtitle1">Date:</Typography>
@@ -1149,78 +1069,37 @@ const handleViewClose = () => {
                     sx={{ width: '100%', marginBottom: '10px' }}
                   />
                   <br />
-                <Typography variant="subtitle1">Requisitioner:</Typography>
+                <Typography variant="subtitle1">Inspection:</Typography>
                   <TextField
                     type="text"
-                    name="Requisitioner"
-                    placeholder="Requisitioner"
-                    value={viewItem  ? viewItem .Requisitioner : ''}
-                    disabled
-                    sx={{ width: '100%', marginBottom: '10px' }}
-                  />
-                  <br />
-
-                  <fieldset>
-                    <legend name="Services" >SERVICES:</legend>
-                    <Checkbox
-                      value=" Application Installation,"
-                      checked={formData.Services.includes(' Application Installation,')}
-                      disabled
-                    />
-                    Application Installation
-                    <br />
-                    <Checkbox
-                      value=" Network,"
-                      checked={formData.Services.includes(' Network,')}
-                      disabled
-                    />
-                    Network
-                    <br />
-                    <Checkbox
-                      value=" Inventory,"
-                      checked={formData.Services.includes(' Inventory,')}
-                      disabled
-                    />
-                    Inventory
-                    <br />
-                    <Checkbox 
-                      value=" Reformat,"
-                      checked={formData.Services.includes(' Reformat,')}
-                      disabled
-                    />
-                    Reformat
-                    <br />
-                    <Checkbox
-                      value=" Repair,"
-                      checked={formData.Services.includes(' Repair,')}
-                      disabled
-                    />
-                    Repair
-                    <br />
-
-                    <Checkbox
-                      value={formData.otherServices || ' Others,'}
-                      checked={formData.Services.includes(' Others,')}
-                      disabled
-                    />
-                    Others:
-                    <input
-                      type="text"
-                      value={formData.otherServices}
-                      disabled={!formData.Services.includes(' Others,')}
-                    />
-                  </fieldset>
-                  <br/>
-                <Typography variant="subtitle1">Remarks:</Typography>
-                  <TextField
-                    type="text"
-                    name="Remarks"
-                    placeholder="Remarks"
-                    value={viewItem  ? viewItem .Remarks :''}
+                    name="Inspection"
+                    placeholder="Inspection"
+                    value={viewItem  ? viewItem .Inspection : ''}
                     disabled
                     sx={{ width: '100%', marginBottom: '10px' }}
                   />
                   <br/>
+                <Typography variant="subtitle1">Inspected by:</Typography>
+                  <TextField
+                    type="text"
+                    name="InspectedBy"
+                    placeholder="Inspected by"
+                    value={viewItem  ? viewItem .InspectedBy :''}
+                    disabled
+                    sx={{ width: '100%', marginBottom: '10px' }}
+                  />
+                  <br/>
+                  <Typography variant="subtitle1">Noted by:</Typography>
+                  <TextField
+                    type="text"
+                    name="NotedBy"
+                    placeholder="Noted by"
+                    value={viewItem  ? viewItem .NotedBy :''}
+                    disabled
+                    sx={{ width: '100%', marginBottom: '10px' }}
+                  />
+                  <br/>
+
                   <Typography variant="subtitle1">File:</Typography>
                     {viewItem && viewItem.fileURL ? (
                       <a href={viewItem.fileURL} target="_blank" rel="noreferrer noopener" download>
@@ -1260,5 +1139,4 @@ const handleViewClose = () => {
 
     </>
   );}
-
 
